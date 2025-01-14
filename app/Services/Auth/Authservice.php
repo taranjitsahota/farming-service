@@ -36,8 +36,10 @@ class AuthService
             $user = Auth::user();
             $token = $user->createToken('LaravelApp')->plainTextToken;
 
+            $trimmedToken = explode('|', $token)[1];
+
             return [
-                'token' => $token,
+                'token' => $trimmedToken,
                 'user' => $user,
             ];
         }
