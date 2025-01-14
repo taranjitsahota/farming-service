@@ -3,46 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\Auth\AuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
 
+    use AuthUser;
+
         public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-        ]);
 
-        return response()->json(['message' => 'User registered successfully.']);
+        try {
+
+            $request->validate([
+                'name' => 'required|string',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|string|confirmed',
+            ]);
+
+            $this->processRegistration($request);
+
+            return response()->json([
+                'message' => 'User registered successfully!',
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $th) {
+            return response()->json(['errors' => $th->validator->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
         public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials.'], 401);
+        try {
+            $request->validate([
+                'email' => 'required|email|exists:users,email',
+                'password' => 'required|string',
+            ]);
+            $result = $this->processLogin($request);
+            if (isset($result['token'])) {
+                return response()->json($result);
+            }
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        } catch (\Illuminate\Validation\ValidationException $th) {
+            return response()->json(['errors' => $th->validator->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $user = Auth::user();
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        $tokenParts = explode('|', $token);
-        $tokenAfterPipe = $tokenParts[1];
-
-        return response()->json(['token' => $tokenAfterPipe, 'role' => $user->role]);
     }
 
         public function logout(Request $request)
