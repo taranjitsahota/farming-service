@@ -20,7 +20,6 @@ class AuthService
                 'password' => Hash::make($request->password),
             ]);
 
-            $user->assignRole($request->role);
             DB::commit();
             return true;
         } catch (\Exception $e) {
