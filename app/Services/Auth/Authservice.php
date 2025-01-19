@@ -18,10 +18,12 @@ class AuthService
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'role' => 'admin',
             ]);
 
             DB::commit();
-            return true;
+            
+            return $user;
         } catch (\Exception $e) {
             DB::rollBack();
             return false;
@@ -34,12 +36,9 @@ class AuthService
         $credentials = $request->only(['email', 'password']);
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            $token = $user->createToken('LaravelApp')->plainTextToken;
 
-            $trimmedToken = explode('|', $token)[1];
 
             return [
-                'token' => $trimmedToken,
                 'user' => $user,
             ];
         }

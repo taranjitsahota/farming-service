@@ -3,29 +3,29 @@
 namespace App\Traits\Auth;
 
 use App\Services\Auth\AuthService;
+use App\Services\GenerateOtp\GenerateOtpMail;
 
 trait AuthUser
 {
     public function processRegistration($request)
     {
         try{
-            AuthService::registerUser($request);
+
+            $user = AuthService::registerUser($request);
+
             return true;
+
         }catch(\Exception $e){
             return false;
         }
     }
 
-    public function processLogin($request)
+        public function processLogin($request)
     {
         try {
-            $result = AuthService::loginUser($request);
+            $user = AuthService::loginUser($request);
 
-            if ($result) {
-                return $result;
-            }
-
-            return true;
+            return $user;
         } catch (\Exception $e) {
             return false;
         }

@@ -13,7 +13,7 @@ class MakeService extends Command
      * @var string
      */
 
-     // php artisan make:trait AuthUser --folder=Traits/Auth 
+     // php artisan make:service AuthUser --folder=Services/Auth 
 
     protected $signature = 'make:service {name} {--folder=Services : The folder where the service should be created}';
 

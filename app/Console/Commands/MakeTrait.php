@@ -12,6 +12,10 @@ class MakeTrait extends Command
      *
      * @var string
      */
+
+     // php artisan make:trait AuthUser --folder=Traits/Auth 
+
+     
     protected $signature = 'make:trait {name} {--folder=Traits : The folder where the trait should be created}';
 
     /**
