@@ -12,8 +12,10 @@ class AttachmentController extends Controller
      */
     public function index()
     {
+
         $attachments = Attachment::all();
         return response()->json($attachments, 200);
+
     }
 
     /**
@@ -29,6 +31,7 @@ class AttachmentController extends Controller
      */
     public function store(Request $request)
     {
+
         $request->validate([
             'attachment_name' => 'required|string|max:255',
             'attachment_type' => 'required|string|max:255',
@@ -41,6 +44,7 @@ class AttachmentController extends Controller
             'message' => 'Attachment created successfully.',
             'data' => $attachment,
         ], 201);
+
     }
 
     /**
@@ -64,6 +68,7 @@ class AttachmentController extends Controller
      */
     public function update(Request $request, $attachment)
     {
+
         $request->validate([
             'attachment_name' => 'required|string|max:255',
             'attachment_type' => 'required|string|max:255',
@@ -76,6 +81,7 @@ class AttachmentController extends Controller
             'message' => 'Attachment updated successfully.',
             'data' => $attachment,
         ], 200);
+
     }
 
     /**
@@ -83,10 +89,12 @@ class AttachmentController extends Controller
      */
     public function destroy($attachment)
     {
+
         $attachment->delete();
 
         return response()->json([
             'message' => 'Attachment deleted successfully.',
         ], 200);
+        
     }
 }
