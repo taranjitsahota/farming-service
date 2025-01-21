@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('pincode'); // Pincode of the area
-            $table->string('district')->nullable(); // District name
+            $table->unsignedBigInteger('city_id'); // References city
+            $table->unsignedBigInteger('state_id'); // References state
+            $table->string('village')->nullable(); // Village name (optional)
             $table->boolean('is_enabled')->default(true); // Enable/Disable status
+            $table->string('pincode'); // Pincode of the area
             $table->timestamps();
+
+            $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade');
+            $table->foreign('state_id')->references('id')->on('states')->onDelete('cascade');
         });        
     }
 
