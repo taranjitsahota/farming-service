@@ -85,7 +85,7 @@ class AuthController extends Controller
             'contact_number' => 'required|unique:users,contact_number',
             'pin' => 'required|min:4',
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'fathers_name' => 'required|string|max:255',
             'pincode' => 'required|max:255',
             'village' => 'required|string|max:255',
