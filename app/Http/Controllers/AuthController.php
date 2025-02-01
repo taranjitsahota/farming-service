@@ -16,10 +16,10 @@ class AuthController extends Controller
     use AuthUser;
 
     /**
-     * Register a new user.
+     * Register a new admin & superadmin.
      *
      * @OA\Post(
-     *     path="/api/register",
+     *     path="/api/register-superadmin-admin",
      *     tags={"Authentication"},
      *     summary="Register a new user",
      *     @OA\RequestBody(
@@ -34,25 +34,13 @@ class AuthController extends Controller
      *             @OA\Property(property="role", type="string")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="User registered successfully!",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="User registered successfully!")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Internal Server Error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Something went wrong!"),
-     *             @OA\Property(property="error", type="string", example="Error details")
-     *         )
-     *     )
+     *     @OA\Response(response=201, ref="#/components/responses/201"),
+     *     @OA\Response(response="422", ref="#/components/responses/422"),
+     *     @OA\Response(response="500", ref="#/components/responses/500")
      * )
      */
 
-        public function registeradmin(Request $request)
+        public function registerSuperadminAdmin(Request $request)
     {
 
         try {
@@ -61,13 +49,75 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users|max:255',
                 'password' => 'required|string|confirmed|max:100|min:8',
+                'role' => 'required|string',
             ]);
 
-            $this->processRegistration($request);
+            $this->RegistrationSuperadminAdmin($request);
 
             return response()->json([
                 'message' => 'User registered successfully!',
             ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $th) {
+
+            return response()->json(['errors' => $th->validator->errors()], 422);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
+
+        }
+    }
+
+    /**
+ * Register a new user.
+ *
+ * @OA\Post(
+ *     path="/api/register-user",
+ *     tags={"Authentication"},
+ *     summary="Register a new admin & superadmin",
+ *     description="Registers a new user with name, email (optional), contact number, and pin.",
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             required={"name", "contact_number", "pin"},
+ *             @OA\Property(property="name", type="string", example="John Doe"),
+ *             @OA\Property(property="email", type="string", nullable=true, example="john.doe@example.com"),
+ *             @OA\Property(property="contact_number", type="string", example="+1234567890"),
+ *             @OA\Property(property="pin", type="string", example="1234"),
+ *         )
+ *     ),
+ *     @OA\Response(response=201, ref="#/components/responses/201"),
+ *     @OA\Response(response=422, ref="#/components/responses/422"),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
+    
+        public function registerUser(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'nullable|email|unique:users,email',
+                'contact_number' => 'required|unique:users,contact_number',
+                'pin' => 'required|min:4',
+            ]);
+
+            $user = $this->processRegistrationUser($request);
+
+            if ($user) {
+                return response()->json([
+                    'message' => 'User registered successfully!',
+                ], 201);
+            } else {
+                return response()->json([
+                    'message' => 'User registration failed!',
+                ], 500); 
+            }
         } catch (\Illuminate\Validation\ValidationException $th) {
             return response()->json(['errors' => $th->validator->errors()], 422);
         } catch (\Exception $e) {
@@ -78,85 +128,154 @@ class AuthController extends Controller
         }
     }
 
-    public function registerUser(Request $request)
+    /**
+ * @OA\Post(
+ *     path="/api/complete-profile",
+ *     summary="Complete user profile",
+ *     description="Allows authenticated users to complete their profile by providing additional details.",
+ *     tags={"User Profile completion"},
+ *     security={{"bearerAuth":{}}}, 
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             required={"first_name", "fathers_name", "pincode", "village", "post_office", "police_station", "district", "total_servicable_land"},
+ *             @OA\Property(property="first_name", type="string", example="John"),
+ *             @OA\Property(property="last_name", type="string", example="Doe"),
+ *             @OA\Property(property="fathers_name", type="string", example="Robert Doe"),
+ *             @OA\Property(property="pincode", type="string", example="123456"),
+ *             @OA\Property(property="village", type="string", example="Greenfield"),
+ *             @OA\Property(property="post_office", type="string", example="Greenfield PO"),
+ *             @OA\Property(property="police_station", type="string", example="Greenfield PS"),
+ *             @OA\Property(property="district", type="string", example="Central District"),
+ *             @OA\Property(property="total_servicable_land", type="string", example="5 acres")
+ *         )
+ *     ),
+ *     @OA\Response(response=200, ref="#/components/responses/200"),
+ *     @OA\Response(response=401, ref="#/components/responses/401"),
+ *     @OA\Response(response=422, ref="#/components/responses/422"),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
+
+    public function completeUserProfile(Request $request)
     {
-        // Validate request data
-        $validator = Validator::make($request->all(), [
-            'contact_number' => 'required|unique:users,contact_number',
-            'pin' => 'required|min:4',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'fathers_name' => 'required|string|max:255',
-            'pincode' => 'required|max:255',
-            'village' => 'required|string|max:255',
-            'post_office' => 'required|string|max:255',
-            'police_station' => 'required|string|max:255',
-            'district' => 'required|string|max:255',
-            'total_servicable_land' => 'required|string|max:255',
-        ]);
+        try {
+            $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'nullable|string|max:255',
+                'fathers_name' => 'required|string|max:255',
+                'pincode' => 'required|string|max:255',
+                'village' => 'required|string|max:255',
+                'post_office' => 'required|string|max:255',
+                'police_station' => 'required|string|max:255',
+                'district' => 'required|string|max:255',
+                'total_servicable_land' => 'required|string|max:255',
+            ]);
 
-        // Return validation errors if any
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+           
+
+            $this->processcompleteUserProfile($request);
+          
+
+            return response()->json([
+                'message' => 'Profile completed successfully!',
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $th) {
+            return response()->json(['errors' => $th->validator->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Create the user in the users table
-        $user = User::create([
-            'email' => $request->email,
-            'name' => $request->first_name,
-            'contact_number' => $request->contact_number,
-            'pin' => Hash::make($request->pin), // Hash the pin
-        ]);
-
-        // Create associated user info in the userinfos table
-        $userInfo = UserInfo::create([
-            'user_id' => $user->id,
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'fathers_name' => $request->fathers_name,
-            'pincode' => $request->pincode,
-            'village' => $request->village,
-            'post_office' => $request->post_office,
-            'police_station' => $request->police_station,
-            'district' => $request->district,
-            'total_servicable_land' => $request->total_servicable_land,
-            'fathers_name' => $request->fathers_name,
-        ]);
-
-        // Return a success message with the user info
-        return response()->json([
-            'message' => 'User registered successfully',
-        ], 201);
     }
 
-    public function loginuser(Request $request)
+    /**
+ * @OA\Post(
+ *     path="/api/login-user",
+ *     summary="User login",
+ *     description="Logs in a user using contact number and PIN",
+ *     tags={"Authentication"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             required={"contact_number", "pin"},
+ *             @OA\Property(property="contact_number", type="string", example="9876543210"),
+ *             @OA\Property(property="pin", type="string", example="1234")
+ *         )
+ *     ),
+ *     @OA\Response(response=200, ref="#/components/responses/200"),
+ *     @OA\Response(response=401, ref="#/components/responses/401"),
+ *     @OA\Response(response=422, ref="#/components/responses/422"),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
+
+    public function loginUser(Request $request)
     {
-        // Validate request data
-        $validator = Validator::make($request->all(), [
+
+        try {
+
+        $request->validate([
             'contact_number' => 'required|exists:users,contact_number',
             'pin' => 'required',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        $this->processRegistrationUser($request);
 
-        // Find the user by contact number
         $user = User::where('contact_number', $request->contact_number)->first();
 
-        // Check if the PIN matches
         if (Hash::check($request->pin, $user->pin)) {
-            // Generate an API token for the user
+
             $token = $user->createToken('YourAppName')->plainTextToken;
+            $trimmedToken = explode('|', $token)[1];
 
             return response()->json([
                 'message' => 'Login successful',
-                'token' => $token
+                'token' => $trimmedToken,
+                'profile_completed' => $user->profile_completed,
+                'role' => $user->role,
             ], 200);
         } else {
             return response()->json(['error' => 'Invalid PIN'], 401);
         }
+    } catch (\Illuminate\Validation\ValidationException $th) {
+        return response()->json(['errors' => $th->validator->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Invalid PIN',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+    }
+
+    /**
+ * @OA\Post(
+ *     path="/api/verify-otp",
+ *     summary="Verify OTP",
+ *     description="Verifies the OTP and logs in the user",
+ *     tags={"Authentication"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             required={"user_id", "otp"},
+ *             @OA\Property(property="user_id", type="integer", example=1),
+ *             @OA\Property(property="otp", type="integer", example=123456)
+ *         )
+ *     ),
+ *     @OA\Response(response=200, ref="#/components/responses/200"),
+ *     @OA\Response(response=400, description="Invalid or expired OTP", 
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Invalid or expired OTP")
+ *         )
+ *     ),
+ *     @OA\Response(response=422, ref="#/components/responses/422"),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
 
     public function verifyOtp(Request $request)
     {
@@ -186,6 +305,33 @@ class AuthController extends Controller
         return response()->json(['message' => 'Invalid or expired OTP'], 400);
     }
     
+    /**
+ * @OA\Post(
+ *     path="/api/resend-otp",
+ *     summary="Resend OTP",
+ *     description="Resends OTP to the user's registered email",
+ *     tags={"Authentication"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             required={"user_id"},
+ *             @OA\Property(property="user_id", type="integer", example=1)
+ *         )
+ *     ),
+ *     @OA\Response(response=200, description="OTP sent successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="New OTP sent to your email.")
+ *         )
+ *     ),
+ *     @OA\Response(response=404, description="User not found",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="User not found.")
+ *         )
+ *     ),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
 
         public function resendOtp(Request $request)
     {
@@ -221,7 +367,7 @@ class AuthController extends Controller
      * Log in a user.
      *
      * @OA\Post(
-     *     path="/api/login",
+     *     path="/api/login-superadmin-admin",
      *     tags={"Authentication"},
      *     summary="Log in a user",
      *     @OA\RequestBody(
@@ -233,33 +379,14 @@ class AuthController extends Controller
      *             @OA\Property(property="password", type="string", example="password123")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Login successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="token", type="string", example="Bearer eyJhbGciOiJIUzI1NiIsInR...")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Invalid credentials",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Invalid credentials")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Internal Server Error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Something went wrong!"),
-     *             @OA\Property(property="error", type="string", example="Error details")
-     *         )
-     *     )
+         *     @OA\Response(response=200, ref="#/components/responses/200"),
+     *     @OA\Response(response="401", ref="#/components/responses/401"),
+     *     @OA\Response(response="500", ref="#/components/responses/500")
      * )
      */
 
      
-     public function login(Request $request)
+     public function loginSuperadminAdmin(Request $request)
      {
          try {
              $request->validate([
@@ -267,7 +394,7 @@ class AuthController extends Controller
                  'password' => 'required|string',
              ]);
      
-             $result = $this->processLogin($request);
+             $result = $this->processLoginAdminSuperadmin($request);
 
              if (isset($result['user'])) {
 
@@ -292,6 +419,28 @@ class AuthController extends Controller
          }
      }
 
+     /**
+ * @OA\Post(
+ *     path="/api/logout",
+ *     summary="Logout a user",
+ *     description="Logs out the currently authenticated user and deletes their tokens",
+ *     tags={"Authentication"},
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(response=200, 
+ *         description="Successfully logged out",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Logged out successfully.")
+ *         )
+ *     ),
+ *     @OA\Response(response=401, 
+ *         description="Unauthorized access",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Unauthorized")
+ *         )
+ *     ),
+ *     @OA\Response(response=500, ref="#/components/responses/500")
+ * )
+ */
 
         public function logout(Request $request)
     {

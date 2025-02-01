@@ -4,10 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login-superadmin-admin', [AuthController::class, 'loginSuperadminAdmin']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-Route::post('/register', [AuthController::class, 'registeradmin']);
+Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
+
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -19,7 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //superadmin routes
     
     Route::middleware('role:superadmin')->group(function () {
-        // Route::post('/register', [AuthController::class, 'registeradmin']);
+        // Route::post('/register', [AuthController::class, 'registerSuperadminAdmin']);
     });
 
     //admin routes
@@ -28,7 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     //user routes
-    Route::middleware('role:user')->get('/user-dashboard', function () {
+    Route::middleware(['role:user','check.process.complete'])->get('/user-dashboard', function () {
         return response()->json(['message' => 'Welcome to the user dashboard']);
     });
 

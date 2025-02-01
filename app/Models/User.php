@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Enums\RoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,7 +26,10 @@ class User extends Authenticatable
         'role',
         'contact_number',
         'pin',
+        'profile_completed'
     ];
+
+ 
 
     public function userInfo()
     {
@@ -48,5 +53,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'role' => RoleEnum::class,  // Cast to the enum
+        'profile_completed' => 'boolean',
     ];
 }

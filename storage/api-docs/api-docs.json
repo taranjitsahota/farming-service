@@ -6,29 +6,14 @@
         "version": "1.0.0"
     },
     "paths": {
-        "/api/v1/example": {
-            "get": {
-                "tags": [
-                    "Example"
-                ],
-                "summary": "Get example data",
-                "description": "An example endpoint",
-                "operationId": "getExample",
-                "responses": {
-                    "200": {
-                        "description": "Successful response"
-                    }
-                }
-            }
-        },
-        "/api/register": {
+        "/api/register-superadmin-admin": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Register a new user",
-                "description": "Register a new user.",
-                "operationId": "8a56853624e025573120a09a4c75d468",
+                "description": "Register a new admin & superadmin.",
+                "operationId": "125ead1129daacea416bc6c43cd40596",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -69,14 +54,321 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully!",
+                        "$ref": "#/components/responses/201"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/register-user": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new admin & superadmin",
+                "description": "Registers a new user with name, email (optional), contact number, and pin.",
+                "operationId": "9a5c22700e503a11b63eb63c15fb359e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "contact_number",
+                                    "pin"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com",
+                                        "nullable": true
+                                    },
+                                    "contact_number": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "pin": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/201"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/complete-profile": {
+            "post": {
+                "tags": [
+                    "User Profile completion"
+                ],
+                "summary": "Complete user profile",
+                "description": "Allows authenticated users to complete their profile by providing additional details.",
+                "operationId": "4c29d40ee784b1c2a62a92eb0e74feb6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "fathers_name",
+                                    "pincode",
+                                    "village",
+                                    "post_office",
+                                    "police_station",
+                                    "district",
+                                    "total_servicable_land"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "fathers_name": {
+                                        "type": "string",
+                                        "example": "Robert Doe"
+                                    },
+                                    "pincode": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "village": {
+                                        "type": "string",
+                                        "example": "Greenfield"
+                                    },
+                                    "post_office": {
+                                        "type": "string",
+                                        "example": "Greenfield PO"
+                                    },
+                                    "police_station": {
+                                        "type": "string",
+                                        "example": "Greenfield PS"
+                                    },
+                                    "district": {
+                                        "type": "string",
+                                        "example": "Central District"
+                                    },
+                                    "total_servicable_land": {
+                                        "type": "string",
+                                        "example": "5 acres"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/login-user": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User login",
+                "description": "Logs in a user using contact number and PIN",
+                "operationId": "42dc06fc50e6c2d8c00754e67093e550",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_number",
+                                    "pin"
+                                ],
+                                "properties": {
+                                    "contact_number": {
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    },
+                                    "pin": {
+                                        "type": "string",
+                                        "example": "1234"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/verify-otp": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify OTP",
+                "description": "Verifies the OTP and logs in the user",
+                "operationId": "7809ddcd47cab2525ccd43d1c2031bfd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "otp": {
+                                        "type": "integer",
+                                        "example": 123456
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "400": {
+                        "description": "Invalid or expired OTP",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "User registered successfully!"
+                                            "example": "Invalid or expired OTP"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/resend-otp": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Resend OTP",
+                "description": "Resends OTP to the user's registered email",
+                "operationId": "d345e764f1190fc7cfdc54bb87ec0a10",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "New OTP sent to your email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found."
                                         }
                                     },
                                     "type": "object"
@@ -85,36 +377,19 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Something went wrong!"
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error details"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/500"
                     }
                 }
             }
         },
-        "/api/login": {
+        "/api/login-superadmin-admin": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Log in a user",
                 "description": "Log in a user.",
-                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "operationId": "f96775914a5b99108902ace011328880",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -141,14 +416,35 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Login successful",
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout a user",
+                "description": "Logs out the currently authenticated user and deletes their tokens",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged out",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "token": {
+                                        "message": {
                                             "type": "string",
-                                            "example": "Bearer eyJhbGciOiJIUzI1NiIsInR..."
+                                            "example": "Logged out successfully."
                                         }
                                     },
                                     "type": "object"
@@ -157,14 +453,14 @@
                         }
                     },
                     "401": {
-                        "description": "Invalid credentials",
+                        "description": "Unauthorized access",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Invalid credentials"
+                                            "example": "Unauthorized"
                                         }
                                     },
                                     "type": "object"
@@ -173,23 +469,163 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Something went wrong!"
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error details"
-                                        }
-                                    },
-                                    "type": "object"
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "responses": {
+            "403": {
+                "description": "Unauthorized access",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "type": "boolean",
+                                    "example": false
+                                },
+                                "status_code": {
+                                    "type": "integer",
+                                    "example": 401
+                                },
+                                "message": {
+                                    "type": "string",
+                                    "example": "Unauthorized access."
                                 }
-                            }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "500": {
+                "description": "Internal Server Error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "Something went wrong!"
+                                },
+                                "error": {
+                                    "type": "string",
+                                    "example": "Internal Server Error"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "401": {
+                "description": "Invalid credentials",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "Invalid credentials"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "200": {
+                "description": "Successful operation",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "message": {
+                                    "type": "string",
+                                    "example": "Operation successful"
+                                },
+                                "data": {
+                                    "type": "object",
+                                    "example": []
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "201": {
+                "description": "Resource created successfully",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "message": {
+                                    "type": "string",
+                                    "example": "Resource created successfully"
+                                },
+                                "data": {
+                                    "type": "object",
+                                    "example": []
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "422": {
+                "description": "Validation error - invalid input data",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "type": "boolean",
+                                    "example": false
+                                },
+                                "error": {
+                                    "type": "string",
+                                    "example": "The given data was invalid."
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "404": {
+                "description": "Record not updated",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "message": {
+                                    "type": "string",
+                                    "example": "Not Updated!!"
+                                }
+                            },
+                            "type": "object"
                         }
                     }
                 }
@@ -202,8 +638,8 @@
             "description": "Authentication"
         },
         {
-            "name": "Example",
-            "description": "Example"
+            "name": "User Profile completion",
+            "description": "User Profile completion"
         }
     ]
 }
