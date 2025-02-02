@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
-            $table->string('vehicle_name'); // Name or model of the vehicle
-            $table->string('vehicle_number')->unique(); // Unique vehicle registration number
-            $table->string('type'); // Type of vehicle (e.g., tractor, combine)
-            $table->boolean('is_enabled')->default(true); // Enable/Disable status
-            $table->unsignedBigInteger('pincode')->nullable(); // Specific area of service
+            $table->string('vehicle_name');
+            $table->string('vehicle_number')->unique();
+            $table->string('type');
+            $table->boolean('is_enabled')->default(true);
+            $table->unsignedBigInteger('pincode')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

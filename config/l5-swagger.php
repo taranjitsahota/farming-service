@@ -170,6 +170,10 @@ return [
         */
         'securityDefinitions' => [
             'securitySchemes' => [
+                'sanctum' => [
+                        'type' => 'http',
+                        'scheme' => 'bearer',
+                    ],
                 /*
                  * Examples of Security schemes
                  */
@@ -217,6 +221,9 @@ return [
                 */
             ],
             'security' => [
+                [
+                    'sanctum' => []
+                ],
                 /*
                  * Examples of Securities
                  */

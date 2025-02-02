@@ -134,7 +134,7 @@ class AuthController extends Controller
  *     summary="Complete user profile",
  *     description="Allows authenticated users to complete their profile by providing additional details.",
  *     tags={"User Profile completion"},
- *     security={{"bearerAuth":{}}}, 
+ *     security={{"sanctum":{}}}, 
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
@@ -447,6 +447,20 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out successfully.']);
     }
+
+    public function getPincodeForVillage($villageName)
+{
+    // dd($villageName);
+    $url = "https://api.postalpincode.in/postoffice/" . urlencode($villageName);
+    $response = file_get_contents($url);
+    $data = json_decode($response, true);
+
+    if (!empty($data[0]['PostOffice'])) {
+        return $data[0]['PostOffice'][0]['Pincode'];
+    }
+
+    return "Pincode not found";
+}
 
 
 }

@@ -8,6 +8,7 @@ Route::post('/login-superadmin-admin', [AuthController::class, 'loginSuperadminA
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
+Route::post('/getPincodeForVillage/{villagename}', [AuthController::class, 'getPincodeForVillage']);
 
 
 

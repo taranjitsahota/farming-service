@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('crops', function (Blueprint $table) {
             $table->id();
-            $table->string('crop_name'); // Name of the crop
+            $table->string('crop_name');
             $table->string('season')->nullable(); // Season (e.g., winter, summer)
-            $table->boolean('is_enabled')->default(true); // Enable/Disable status
+            $table->boolean('is_enabled')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
         

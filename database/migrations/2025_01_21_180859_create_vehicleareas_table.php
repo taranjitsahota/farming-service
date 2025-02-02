@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('vehicle_id'); // Vehicle ID
             $table->unsignedBigInteger('area_id'); // Area ID
+            $table->softDeletes();
             $table->timestamps();
         
             $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('cascade');

@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('usersubscriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Foreign key to users table
-            $table->foreignId('subscriptionplan_id')->constrained('subscriptionplans')->onDelete('cascade'); // Foreign key to subscription_plans table
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('subscriptionplan_id')->constrained('subscriptionplans')->onDelete('cascade');
             $table->date('start_date');
             $table->date('end_date');
-            $table->string('status')->default('active'); // e.g., active, expired, canceled
+            $table->string('status')->default('active');
             $table->string('payment_method')->nullable();
-            $table->string('payment_status')->default('pending'); // Pending, paid, failed
+            $table->string('payment_status')->default('pending');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

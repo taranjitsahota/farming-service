@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->decimal('price', 8, 2); // Price with two decimal places
-            $table->string('duration'); // Duration of the plan (e.g., "1 month", "1 year")
-            $table->boolean('is_active')->default(true); // Whether the plan is active
+            $table->decimal('price', 8, 2);
+            $table->string('duration');
+            $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -23,6 +23,7 @@ return new class extends Migration
         $table->string('police_station');
         $table->string('district');
         $table->string('total_servicable_land');
+        $table->softDeletes();
         $table->timestamps();
 
         $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('otp')->nullable();
             $table->timestamp('otp_expiry')->nullable();
             $table->string('pin')->nullable();
+            $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
         });
