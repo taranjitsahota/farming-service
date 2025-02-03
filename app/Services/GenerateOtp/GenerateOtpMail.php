@@ -6,8 +6,8 @@ use App\Services\SendEmail\SendOtpEmail;
 
 class GenerateOtpMail
 {
-    public static function GenereateOtp($user){
-        $otp = rand(100000, 999999);
+    public static function GenereateOtp($user,$otp){
+        
     
         // Store OTP and its expiry time (5 minutes from now)
         $user->otp = $otp;

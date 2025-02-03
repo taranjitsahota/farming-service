@@ -253,117 +253,6 @@ class AuthController extends Controller
     }
     }
 
-    /**
- * @OA\Post(
- *     path="/api/verify-otp",
- *     summary="Verify OTP",
- *     description="Verifies the OTP and logs in the user",
- *     tags={"Authentication"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             required={"user_id", "otp"},
- *             @OA\Property(property="user_id", type="integer", example=1),
- *             @OA\Property(property="otp", type="integer", example=123456)
- *         )
- *     ),
- *     @OA\Response(response=200, ref="#/components/responses/200"),
- *     @OA\Response(response=400, description="Invalid or expired OTP", 
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="Invalid or expired OTP")
- *         )
- *     ),
- *     @OA\Response(response=422, ref="#/components/responses/422"),
- *     @OA\Response(response=500, ref="#/components/responses/500")
- * )
- */
-
-    public function verifyOtp(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'otp' => 'required|integer',
-        ]);
-    
-        $user = User::find($request->user_id);
-
-        if ($user && $user->otp === $request->otp && $user->otp_expiry >= now()) {
-            // Clear OTP after verification
-            $user->otp = null;
-            $user->otp_expiry = null;
-            $user->save();
-    
-            $token = $user->createToken('LaravelApp')->plainTextToken;
-            $trimmedToken = explode('|', $token)[1];
-    
-            return response()->json([
-                'message' => 'Login successful',
-                'token' => $trimmedToken,
-                'user' => $user,
-            ]);
-        }
-    
-        return response()->json(['message' => 'Invalid or expired OTP'], 400);
-    }
-    
-    /**
- * @OA\Post(
- *     path="/api/resend-otp",
- *     summary="Resend OTP",
- *     description="Resends OTP to the user's registered email",
- *     tags={"Authentication"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             type="object",
- *             required={"user_id"},
- *             @OA\Property(property="user_id", type="integer", example=1)
- *         )
- *     ),
- *     @OA\Response(response=200, description="OTP sent successfully",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="New OTP sent to your email.")
- *         )
- *     ),
- *     @OA\Response(response=404, description="User not found",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="User not found.")
- *         )
- *     ),
- *     @OA\Response(response=500, ref="#/components/responses/500")
- * )
- */
-
-        public function resendOtp(Request $request)
-    {
-        try {
-            $request->validate([
-                'user_id' => 'required|exists:users,id',
-            ]);
-
-            $user = User::find($request->user_id);
-
-            if (!$user) {
-                return response()->json(['message' => 'User not found.'], 404);
-            }
-
-            // Generate new OTP
-            GenerateOtpMail::GenereateOtp($user);
-
-            return response()->json([
-                'message' => 'New OTP sent to your email.'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-
 
      /**
      * Log in a user.
@@ -400,7 +289,10 @@ class AuthController extends Controller
 
              if (isset($result['user'])) {
 
-                 $otp = GenerateOtpMail::GenereateOtp($result['user']);
+
+                $otp = rand(100000, 999999);
+
+                 $otp = GenerateOtpMail::GenereateOtp($result['user'],$otp);
      
                  return response()->json([
                      'message' => 'OTP verification required',
@@ -464,13 +356,79 @@ class AuthController extends Controller
         return "Pincode not found";
     }
 
+        /**
+     * @OA\Post(
+     *     path="/api/auth/change-password",
+     *     summary="Change password using old credentials",
+     *     description="Admins use old password; Users use old PIN",
+     *     operationId="changePassword",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"user_id", "new_password"},
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="old_password", type="string", example="OldPassword123"),
+     *                 @OA\Property(property="old_pin", type="string", example="1234"),
+     *                 @OA\Property(property="new_password", type="string", example="NewSecurePass123")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, ref="#/components/responses/200"),
+     *     @OA\Response(response=404, ref="#/components/responses/404"),
+     *     @OA\Response(response=500, ref="#/components/responses/500")
+     * )
+     */
+
+        public function changePassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'old_password' => 'nullable|string',
+                'old_pin' => 'nullable|string',
+                'new_password' => 'required|string|min:6',
+            ]);
+
+            $user = User::find($request->user_id);
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            if ($user->role === 'admin' || $user->role === 'superadmin') {
+                // Admin uses old password
+                if (!Hash::check($request->old_password, $user->password)) {
+                    return response()->json(['message' => 'Old password is incorrect.'], 400);
+                }
+            } else {
+                // Normal users use old PIN
+                if ($user->pin !== $request->old_pin) {
+                    return response()->json(['message' => 'Old PIN is incorrect.'], 400);
+                }
+            }
+
+            // Update password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json(['message' => 'Password updated successfully.'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Something went wrong!', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+
     use SendOtp;
     
-    /**
+        /**
      * @OA\Post(
      *     path="/api/auth/send-otp",
      *     summary="Send OTP for password reset",
-     *     description="Send OTP to the provided phone number for password reset.",
+     *     description="Send OTP to the provided phone number or email based on user selection.",
      *     operationId="sendOtpForPasswordReset",
      *     tags={"Auth"},
      *     @OA\RequestBody(
@@ -479,43 +437,203 @@ class AuthController extends Controller
      *             mediaType="application/json",
      *             @OA\Schema(
      *                 type="object",
-     *                 required={"phone"},
-     *                 @OA\Property(property="phone", type="string", example="+918104535322")
+     *                 required={"contact_type", "contact"},
+     *                 @OA\Property(property="contact_type", type="string", enum={"email", "phone"}, example="phone"),
+     *                 @OA\Property(property="contact", type="string", example="+918104535322")
      *             )
      *         )
      *     ),
      *     @OA\Response(response=200, ref="#/components/responses/200"),
      *     @OA\Response(response="401", ref="#/components/responses/401"),
-     *     @OA\Response(response="500", ref="#/components/responses/500"),
-     *     @OA\Response(response="201", ref="#/components/responses/201")
+     *     @OA\Response(response="500", ref="#/components/responses/500")
      * )
      */
     public function sendOtpForPasswordReset(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'contact_type' => 'required|in:email,phone',
+            'contact' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 400);
+        }
+
         try {
-            // Validate the phone number (example: check if user exists)
-            $user = User::where('phone', $request->phone)->first();
+            $contact = $request->contact;
+            $contactType = $request->contact_type;
+
+            // Check if user exists
+            $user = User::where($contactType, $contact)->first();
 
             if (!$user) {
                 return response()->json(['message' => 'User not found'], 401);
             }
 
-            // Generate OTP (you can use any method you prefer)
+            // Generate OTP
             $otp = rand(100000, 999999);
 
-            // Send OTP using the trait method and store it in the user's record
-            $messageSid = $this->sendOtp($user, $otp);
+            // Send OTP based on contact type (phone or email)
+            if ($contactType === 'phone') {
+                // Send OTP via Twilio (phone)
+                $messageSid = $this->sendOtp($user, $otp);
+                return response()->json([
+                    'message' => 'OTP sent successfully via phone',
+                    'sid' => $messageSid
+                ], 200);
+            } else {
 
-            // Return a success response with 200
-            return response()->json([
-                'message' => 'OTP sent successfully',
-                'sid' => $messageSid
-            ], 200);
+                GenerateOtpMail::GenereateOtp($user,$otp);
 
+                // Store OTP in the user's record
+                $user->otp = $otp;
+                $user->otp_expiry = now()->addMinutes(5); // OTP expiry time (5 minutes)
+                $user->save();
+
+                return response()->json([
+                    'message' => 'OTP sent successfully via email'
+                ], 200);
+            }
         } catch (Exception $e) {
-            // Catch any other errors and return server error
             return response()->json(['message' => 'Something went wrong, please try again later'], 500);
         }
     }
+
+
+        /**
+     * @OA\Post(
+     *     path="/api/verify-otp",
+     *     summary="Verify OTP",
+     *     description="Verifies the OTP and logs in the user",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"user_id", "otp"},
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="otp", type="integer", example=123456)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, ref="#/components/responses/200"),
+     *     @OA\Response(response=400, description="Invalid or expired OTP", 
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Invalid or expired OTP")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, ref="#/components/responses/422"),
+     *     @OA\Response(response=500, ref="#/components/responses/500")
+     * )
+     */
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'otp' => 'required|integer',
+        ]);
+    
+        $user = User::find($request->user_id);
+
+        if ($user && $user->otp === $request->otp && $user->otp_expiry >= now()) {
+            // Clear OTP after verification
+            $user->otp = null;
+            $user->otp_expiry = null;
+            $user->save();
+    
+            $token = $user->createToken('LaravelApp')->plainTextToken;
+            $trimmedToken = explode('|', $token)[1];
+    
+            return response()->json([
+                'message' => 'Login successful',
+                'token' => $trimmedToken,
+                'user' => $user,
+            ]);
+        }
+    
+        return response()->json(['message' => 'Invalid or expired OTP'], 400);
+    }
+    
+        /**
+     * @OA\Post(
+     *     path="/api/auth/resend-otp",
+     *     summary="Resend OTP to email or phone",
+     *     description="Allows users to request a new OTP via email or SMS",
+     *     operationId="resendOtp",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"user_id", "contact_type"},
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="contact_type", type="string", enum={"email", "phone"}, example="phone")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, ref="#/components/responses/200"),
+     *     @OA\Response(response="404", ref="#/components/responses/404"),
+     *     @OA\Response(response="500", ref="#/components/responses/500")
+     * )
+     */
+
+
+    public function resendOtp(Request $request)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'contact_type' => 'required|in:email,phone', // Ensure user selects email or phone
+            ]);
+    
+            // Find user
+            $user = User::find($request->user_id);
+    
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+    
+            // Generate new OTP
+            $otp = rand(100000, 999999);
+    
+            if ($request->contact_type === 'phone') {
+                // Check if the user has a valid phone number
+                if (!$user->phone) {
+                    return response()->json(['message' => 'Phone number not found for this user.'], 400);
+                }
+    
+                // Send OTP via Twilio (SMS)
+                $messageSid = $this->sendOtp($user, $otp);
+    
+                return response()->json([
+                    'message' => 'New OTP sent to your phone.',
+                    'sid' => $messageSid
+                ], 200);
+            } 
+            else {
+                // Check if the user has a valid email
+                if (!$user->email) {
+                    return response()->json(['message' => 'Email not found for this user.'], 400);
+                }
+    
+                // Send OTP via Email
+                GenerateOtpMail::GenereateOtp($user, $otp);
+    
+                return response()->json([
+                    'message' => 'New OTP sent to your email.'
+                ], 200);
+            }
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
 
 }
