@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 Route::post('/login-superadmin-admin', [AuthController::class, 'loginSuperadminAdmin']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('/send-otp-password-reset-twillio', [AuthController::class, 'sendOtpForPasswordReset']);
 Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
 Route::post('/getPincodeForVillage/{villagename}', [AuthController::class, 'getPincodeForVillage']);
 

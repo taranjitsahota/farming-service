@@ -208,6 +208,211 @@
                 ]
             }
         },
+        "/api/attachments": {
+            "get": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Get all attachments",
+                "description": "Display a listing of the resource.",
+                "operationId": "3d2efaeda133c99c3c0192389f5a6ef5",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Create an attachment",
+                "description": "Store a newly created resource in storage.",
+                "operationId": "ce1f73699a3fcd9230ed2a70d477dc6d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "attachment_name",
+                                    "attachment_type"
+                                ],
+                                "properties": {
+                                    "attachment_name": {
+                                        "type": "string",
+                                        "example": "Invoice.pdf"
+                                    },
+                                    "attachment_type": {
+                                        "type": "string",
+                                        "example": "PDF"
+                                    },
+                                    "is_enabled": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "$ref": "#/components/responses/201"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/attachments/{id}": {
+            "get": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Get an attachment by ID",
+                "description": "Display the specified resource.",
+                "operationId": "bbe2d2185b97b2716f9e2269d2399452",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "404": {
+                        "description": "Attachment not found"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Update an attachment",
+                "description": "Update the specified resource in storage.",
+                "operationId": "70fc4a3154297ff4872ecf5afe31c90c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "attachment_name": {
+                                        "type": "string",
+                                        "example": "Updated Invoice.pdf"
+                                    },
+                                    "attachment_type": {
+                                        "type": "string",
+                                        "example": "PDF"
+                                    },
+                                    "is_enabled": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "404": {
+                        "description": "Attachment not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Delete an attachment (soft delete)",
+                "description": "Remove the specified resource from storage.",
+                "operationId": "e5796e0e4d3a3f40f6eff683683b013e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "404": {
+                        "description": "Attachment not found"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/register-superadmin-admin": {
             "post": {
                 "tags": [
@@ -1291,6 +1496,10 @@
         {
             "name": "Areas",
             "description": "Areas"
+        },
+        {
+            "name": "Attachments",
+            "description": "Attachments"
         },
         {
             "name": "Authentication",

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AreaController extends Controller
 {
@@ -23,7 +24,15 @@ class AreaController extends Controller
 
     public function index()
     {
-        return response()->json(Area::all(), 200);
+        try {
+            $area = Area::all();
+            return response()->json($area, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     
@@ -68,7 +77,7 @@ class AreaController extends Controller
     
             return response()->json(['message' => 'Area created successfully', 'area' => $area]);
     
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
                 'errors'  => $e->errors()
@@ -102,8 +111,15 @@ class AreaController extends Controller
      */
     public function show($id)
     {
-        $area = Area::findOrFail($id);
-        return response()->json($area, 200);
+        try {
+            $area = Area::findOrFail($id);
+            return response()->json($area, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -133,9 +149,30 @@ class AreaController extends Controller
      */
     public function update(Request $request, $id)
     {
+        try {
+
+            $validated = $request->validate([
+                'city_id'   => 'sometimes|exists:cities,id',
+                'state_id'  => 'sometimes|exists:states,id',
+                'village_id'   => 'sometimes|string|max:255',
+                'pincode'   => 'nullable|string|max:10',
+                'is_enabled'=> 'sometimes'
+            ]);
+
         $area = Area::findOrFail($id);
         $area->update($request->all());
         return response()->json($area, 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -157,8 +194,15 @@ class AreaController extends Controller
      */
     public function destroy($id)
     {
+        try {
         $area = Area::findOrFail($id);
         $area->delete();
         return response()->json(['message' => 'Area soft deleted'], 200);
+        }catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

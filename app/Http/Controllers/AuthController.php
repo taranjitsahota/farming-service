@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\UserInfo;
 use App\Services\GenerateOtp\GenerateOtpMail;
 use App\Traits\Auth\AuthUser;
+use App\Traits\SendOtp\SendOtp;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -448,19 +450,72 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully.']);
     }
 
-    public function getPincodeForVillage($villageName)
-{
-    // dd($villageName);
-    $url = "https://api.postalpincode.in/postoffice/" . urlencode($villageName);
-    $response = file_get_contents($url);
-    $data = json_decode($response, true);
+        public function getPincodeForVillage($villageName)
+    {
+        // dd($villageName);
+        $url = "https://api.postalpincode.in/postoffice/" . urlencode($villageName);
+        $response = file_get_contents($url);
+        $data = json_decode($response, true);
 
-    if (!empty($data[0]['PostOffice'])) {
-        return $data[0]['PostOffice'][0]['Pincode'];
+        if (!empty($data[0]['PostOffice'])) {
+            return $data[0]['PostOffice'][0]['Pincode'];
+        }
+
+        return "Pincode not found";
     }
 
-    return "Pincode not found";
-}
+    use SendOtp;
+    
+    /**
+     * @OA\Post(
+     *     path="/api/auth/send-otp",
+     *     summary="Send OTP for password reset",
+     *     description="Send OTP to the provided phone number for password reset.",
+     *     operationId="sendOtpForPasswordReset",
+     *     tags={"Auth"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"phone"},
+     *                 @OA\Property(property="phone", type="string", example="+918104535322")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, ref="#/components/responses/200"),
+     *     @OA\Response(response="401", ref="#/components/responses/401"),
+     *     @OA\Response(response="500", ref="#/components/responses/500"),
+     *     @OA\Response(response="201", ref="#/components/responses/201")
+     * )
+     */
+    public function sendOtpForPasswordReset(Request $request)
+    {
+        try {
+            // Validate the phone number (example: check if user exists)
+            $user = User::where('phone', $request->phone)->first();
 
+            if (!$user) {
+                return response()->json(['message' => 'User not found'], 401);
+            }
+
+            // Generate OTP (you can use any method you prefer)
+            $otp = rand(100000, 999999);
+
+            // Send OTP using the trait method and store it in the user's record
+            $messageSid = $this->sendOtp($user, $otp);
+
+            // Return a success response with 200
+            return response()->json([
+                'message' => 'OTP sent successfully',
+                'sid' => $messageSid
+            ], 200);
+
+        } catch (Exception $e) {
+            // Catch any other errors and return server error
+            return response()->json(['message' => 'Something went wrong, please try again later'], 500);
+        }
+    }
 
 }

@@ -6,6 +6,8 @@ This project is a Laravel-based api application designed to manage rent a tracto
 - Laravel
 - sanctum authentication
 
+
+
 ## Installation
 
 Follow these steps to get the development environment running:
@@ -24,6 +26,13 @@ Follow these steps to get the development environment running:
 5. php artisan migrate --seed
 
 6. php artisan db:seed --class=VillagesImportSeeder
+
+7. composer require twilio/sdk
+
+8. 
+
+9. 
+
 
 ## Running the Project
 
