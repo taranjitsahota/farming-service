@@ -40,7 +40,7 @@ class AuthService
                 'name' => $request->name,
                 'email' => $request->email,
                 'contact_number' => $request->contact_number,
-                'pin' => Hash::make($request->pin), // Hash the pin
+                'pin' => Hash::make($request->pin),
             ]);
 
             DB::commit();

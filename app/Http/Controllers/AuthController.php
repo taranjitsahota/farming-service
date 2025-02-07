@@ -50,8 +50,8 @@ class AuthController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users|max:255',
-                'password' => 'required|string|confirmed|max:100|min:8',
-                'role' => 'required|string',
+                'password' => 'required|string|confirmed|max:50|min:8',
+                'role' => 'required|string|max:12',
             ]);
 
             $this->RegistrationSuperadminAdmin($request);
@@ -104,9 +104,9 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'nullable|email|unique:users,email',
-                'contact_number' => 'required|unique:users,contact_number',
-                'pin' => 'required|min:4',
+                'email' => 'nullable|email|unique:users,email|max:255',
+                'contact_number' => 'required|unique:users,contact_number|max:15',
+                'pin' => 'required|min:4|max:6',
             ]);
 
             $user = $this->processRegistrationUser($request);
@@ -118,7 +118,7 @@ class AuthController extends Controller
             } else {
                 return response()->json([
                     'message' => 'User registration failed!',
-                ], 500); 
+                ]); 
             }
         } catch (\Illuminate\Validation\ValidationException $th) {
             return response()->json(['errors' => $th->validator->errors()], 422);
@@ -167,7 +167,7 @@ class AuthController extends Controller
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'nullable|string|max:255',
                 'fathers_name' => 'required|string|max:255',
-                'pincode' => 'required|string|max:255',
+                'pincode' => 'required|max:25',
                 'village' => 'required|string|max:255',
                 'post_office' => 'required|string|max:255',
                 'police_station' => 'required|string|max:255',
@@ -225,32 +225,29 @@ class AuthController extends Controller
             'pin' => 'required',
         ]);
 
-        $this->processRegistrationUser($request);
+        $result = $this->processUser($request);
 
-        $user = User::where('contact_number', $request->contact_number)->first();
+        if (!$result) {
+            return response()->json(['error' => 'Invalid PIN or contact number'], 401);
+        }
 
-        if (Hash::check($request->pin, $user->pin)) {
-
-            $token = $user->createToken('YourAppName')->plainTextToken;
-            $trimmedToken = explode('|', $token)[1];
-
+        [$user, $trimmedToken] = $result;
+        
             return response()->json([
                 'message' => 'Login successful',
                 'token' => $trimmedToken,
                 'profile_completed' => $user->profile_completed,
                 'role' => $user->role,
             ], 200);
-        } else {
-            return response()->json(['error' => 'Invalid PIN'], 401);
+
+        } catch (\Illuminate\Validation\ValidationException $th) {
+            return response()->json(['errors' => $th->validator->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Invalid PIN',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-    } catch (\Illuminate\Validation\ValidationException $th) {
-        return response()->json(['errors' => $th->validator->errors()], 422);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Invalid PIN',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
     }
 
 
