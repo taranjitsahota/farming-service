@@ -418,8 +418,8 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Register a new user",
-                "description": "Register a new admin & superadmin.",
+                "summary": "Register a new superadmin or admin",
+                "description": "Register a new superadmin or admin.",
                 "operationId": "125ead1129daacea416bc6c43cd40596",
                 "requestBody": {
                     "required": true,
@@ -431,7 +431,9 @@
                                     "email",
                                     "password",
                                     "password_confirmation",
-                                    "role_id"
+                                    "country_code",
+                                    "contact_number",
+                                    "role"
                                 ],
                                 "properties": {
                                     "name": {
@@ -450,8 +452,17 @@
                                         "type": "string",
                                         "example": "password123"
                                     },
+                                    "country_code": {
+                                        "type": "string",
+                                        "example": "+91"
+                                    },
+                                    "contact_number": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
                                     "role": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "admin"
                                     }
                                 },
                                 "type": "object"
@@ -469,17 +480,67 @@
                     "500": {
                         "$ref": "#/components/responses/500"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
-        "/api/register-user": {
+        "/api/login-superadmin-admin": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Register a new admin & superadmin",
-                "description": "Registers a new user with name, email (optional), contact number, and pin.",
-                "operationId": "9a5c22700e503a11b63eb63c15fb359e",
+                "summary": "Log in a user",
+                "description": "Log in admin-superadmin.",
+                "operationId": "f96775914a5b99108902ace011328880",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "description": "Registers a new user with a name, contact number, country code, and optional email.",
+                "operationId": "registerUser",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -488,23 +549,32 @@
                                 "required": [
                                     "name",
                                     "contact_number",
-                                    "pin"
+                                    "country_code",
+                                    "password"
                                 ],
                                 "properties": {
                                     "name": {
+                                        "description": "User's full name",
                                         "type": "string",
                                         "example": "John Doe"
                                     },
                                     "email": {
+                                        "description": "User's email (optional, must be unique)",
                                         "type": "string",
-                                        "example": "john.doe@example.com",
-                                        "nullable": true
+                                        "example": "johndoe@example.com"
                                     },
                                     "contact_number": {
+                                        "description": "User's contact number (must be unique)",
                                         "type": "string",
-                                        "example": "+1234567890"
+                                        "example": "9876543210"
                                     },
-                                    "pin": {
+                                    "country_code": {
+                                        "description": "Country code of the user's phone number",
+                                        "type": "string",
+                                        "example": "+91"
+                                    },
+                                    "password": {
+                                        "description": "4-6 digit password for authentication",
                                         "type": "string",
                                         "example": "1234"
                                     }
@@ -620,7 +690,7 @@
                     "Authentication"
                 ],
                 "summary": "User login",
-                "description": "Logs in a user using contact number and PIN",
+                "description": "Logs in a user using contact number and password",
                 "operationId": "42dc06fc50e6c2d8c00754e67093e550",
                 "requestBody": {
                     "required": true,
@@ -629,14 +699,14 @@
                             "schema": {
                                 "required": [
                                     "contact_number",
-                                    "pin"
+                                    "password"
                                 ],
                                 "properties": {
                                     "contact_number": {
                                         "type": "string",
                                         "example": "9876543210"
                                     },
-                                    "pin": {
+                                    "password": {
                                         "type": "string",
                                         "example": "1234"
                                     }
@@ -662,160 +732,14 @@
                 }
             }
         },
-        "/api/login-superadmin-admin": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Log in a user",
-                "description": "Log in a user.",
-                "operationId": "f96775914a5b99108902ace011328880",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "example": "john.doe@example.com"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "password123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/200"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/401"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                }
-            }
-        },
-        "/api/logout": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Logout a user",
-                "description": "Logs out the currently authenticated user and deletes their tokens",
-                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
-                "responses": {
-                    "200": {
-                        "description": "Successfully logged out",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Logged out successfully."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized access",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/auth/send-otp": {
+        "/api/auth/verify-otp": {
             "post": {
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Send OTP for password reset",
-                "description": "Send OTP to the provided phone number or email based on user selection.",
-                "operationId": "sendOtpForPasswordReset",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "contact_type",
-                                    "contact"
-                                ],
-                                "properties": {
-                                    "contact_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "email",
-                                            "phone"
-                                        ],
-                                        "example": "phone"
-                                    },
-                                    "contact": {
-                                        "type": "string",
-                                        "example": "+918104535322"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/200"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/401"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/500"
-                    }
-                }
-            }
-        },
-        "/api/verify-otp": {
-            "post": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Verify OTP",
-                "description": "Verifies the OTP and logs in the user",
-                "operationId": "7809ddcd47cab2525ccd43d1c2031bfd",
+                "summary": "Verify OTP for authentication or password reset",
+                "description": "Users submit the OTP received via email or phone to verify their identity. The type parameter determines the purpose of OTP verification.",
+                "operationId": "verifyOtp",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -823,16 +747,29 @@
                             "schema": {
                                 "required": [
                                     "user_id",
-                                    "otp"
+                                    "otp",
+                                    "type"
                                 ],
                                 "properties": {
                                     "user_id": {
+                                        "description": "ID of the user",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "otp": {
+                                        "description": "The OTP code received via email or phone",
                                         "type": "integer",
                                         "example": 123456
+                                    },
+                                    "type": {
+                                        "description": "Purpose of OTP verification",
+                                        "type": "string",
+                                        "enum": [
+                                            "first_time",
+                                            "forgot_password",
+                                            "change_password"
+                                        ],
+                                        "example": "first_time"
                                     }
                                 },
                                 "type": "object"
@@ -869,13 +806,13 @@
                 }
             }
         },
-        "/api/auth/resend-otp": {
+        "/api/resend-otp": {
             "post": {
                 "tags": [
-                    "Auth"
+                    "Authentication"
                 ],
-                "summary": "Resend OTP to email or phone",
-                "description": "Allows users to request a new OTP via email or SMS",
+                "summary": "Resend OTP to user",
+                "description": "Resends an OTP to the user's registered email or phone number based on the selected contact type.",
                 "operationId": "resendOtp",
                 "requestBody": {
                     "required": true,
@@ -888,16 +825,18 @@
                                 ],
                                 "properties": {
                                     "user_id": {
+                                        "description": "The ID of the user requesting a new OTP",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "contact_type": {
+                                        "description": "The method by which the user wants to receive the OTP",
                                         "type": "string",
                                         "enum": [
                                             "email",
                                             "phone"
                                         ],
-                                        "example": "phone"
+                                        "example": "email"
                                     }
                                 },
                                 "type": "object"
@@ -909,13 +848,162 @@
                     "200": {
                         "$ref": "#/components/responses/200"
                     },
-                    "404": {
-                        "$ref": "#/components/responses/404"
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/400"
                     },
                     "500": {
                         "$ref": "#/components/responses/500"
                     }
                 }
+            }
+        },
+        "/api/send-otp-for-password-reset": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send OTP for password reset",
+                "description": "Send OTP via email or phone for password reset. The user must exist in the database.",
+                "operationId": "sendOtpForPasswordReset",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_type",
+                                    "contact"
+                                ],
+                                "properties": {
+                                    "contact_type": {
+                                        "description": "Specify whether OTP should be sent to email or phone",
+                                        "type": "string",
+                                        "enum": [
+                                            "email",
+                                            "phone"
+                                        ],
+                                        "example": "phone"
+                                    },
+                                    "contact": {
+                                        "description": "User's email or phone number",
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "429": {
+                        "description": "Too many OTP requests, try again later"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/auth/change-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Change password using old credentials or reset via OTP",
+                "description": "Users can change their password using the old password or reset it via OTP.",
+                "operationId": "changePassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "type",
+                                    "new_password"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "ID of the user",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "type": {
+                                        "description": "Type of password change request: 'first_time' for initial setup, 'forgot_password' for resetting via OTP, 'change_password' for changing with old password",
+                                        "type": "string",
+                                        "enum": [
+                                            "first_time",
+                                            "forgot_password",
+                                            "change_password"
+                                        ],
+                                        "example": "change_password"
+                                    },
+                                    "old_password": {
+                                        "description": "Old password (Required only if type is 'change_password')",
+                                        "type": "string",
+                                        "example": "OldPassword123"
+                                    },
+                                    "new_password": {
+                                        "description": "New password for the user",
+                                        "type": "string",
+                                        "example": "NewSecurePass123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/422"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout a user",
+                "description": "Logs out the currently authenticated user and deletes their tokens",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/200"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/401"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/500"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/check-eligibility": {
@@ -1505,6 +1593,22 @@
                                 "message": {
                                     "type": "string",
                                     "example": "Not Updated!!"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "400": {
+                "description": "Invalid request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "example": "Data does not found for this user."
                                 }
                             },
                             "type": "object"

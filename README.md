@@ -23,7 +23,7 @@ Follow these steps to get the development environment running:
 
 4. php artisan key:generate
 
-5. php artisan migrate --seed
+5. php artisan migrate
 
 6. php artisan db:seed --class=VillagesImportSeeder
 

@@ -4,45 +4,35 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Models\UserInfo;
+use App\Services\GenerateOtp\GenerateOtp;
+use App\Services\GenerateOtp\GenerateOtpMail;
+use App\Services\SendEmail\SendOtpEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\Registered;
 
 class AuthService
 {
-    public static function  registerSuperadminAdmin($request)
+    public static function  register($request,$role = null)
     {
         try {
             DB::beginTransaction();
 
-            $user = User::create([
+            $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
-            ]);
-
-            DB::commit();
-            
-            return $user;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return false;
-        }
-    }
-
-    public static function registerUser($request)
-    {
-        try {
-            DB::beginTransaction();
-
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
+                'country_code' => $request->country_code,
                 'contact_number' => $request->contact_number,
-                'pin' => Hash::make($request->pin),
-            ]);
-
+            ];
+    
+            if ($role) {
+                $userData['role'] = $role;
+            }
+    
+            $user = User::create($userData);
+    
             DB::commit();
             return $user;
         } catch (\Exception $e) {
@@ -50,26 +40,23 @@ class AuthService
             return false;
         }
     }
-
 
 
     public static function loginAdminSuperadmin($request)
     {
         try {
 
-        $credentials = $request->only(['email', 'password']);
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+            $credentials = $request->only(['email', 'password']);
+            
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
 
+                return $user;
+            }
 
-            return [
-                'user' => $user,
-            ];
+        } catch (\Exception $e) {
+            return false;
         }
-
-    } catch (\Exception $e) {
-        return false;
-    }
 
     }
 }

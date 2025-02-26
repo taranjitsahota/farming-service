@@ -79,8 +79,15 @@ use Illuminate\Routing\Controller as BaseController;
      *             @OA\Property(property="message", type="string", example="Not Updated!!")
      *         )
      *     ),
- * )
- */
+     *    @OA\Response(
+    *         response=400,
+    *         description="Invalid request",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="message", type="string", example="Data does not found for this user.")
+    *         )
+    *     ),
+    * )
+    */
 
 class Controller extends BaseController
 {

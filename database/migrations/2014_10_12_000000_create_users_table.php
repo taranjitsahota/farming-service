@@ -16,13 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('country_code', 5)->nullable();
             $table->string('contact_number')->unique()->nullable();
-            $table->string('password')->nullable();
-            $table->enum('role', ['superadmin', 'admin', 'user'])->default('user');
+            $table->string('password');
+            $table->enum('role', ['superadmin', 'admin', 'user', 'driver'])->default('user');
             $table->boolean('profile_completed')->default(false);
-            $table->string('otp')->nullable();
-            $table->timestamp('otp_expiry')->nullable();
-            $table->string('pin')->nullable();
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

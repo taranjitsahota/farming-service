@@ -2,41 +2,28 @@
 
 namespace App\Traits\Auth;
 
+use App\Models\Otpverification;
 use App\Models\User;
 use App\Services\Auth\AuthService;
 use App\Services\CompleteProfile\Completeprofile;
-use App\Services\GenerateOtp\GenerateOtpMail;
 use Illuminate\Support\Facades\Hash;
 
 trait AuthUser
 {
-    public function RegistrationSuperadminAdmin($request)
+    
+    public function register($request,$role)
     {
         try{
 
-            $user = AuthService::registerSuperadminAdmin($request);
+            return AuthService::register($request, $role);
 
-            return true;
 
         }catch(\Exception $e){
             return false;
         }
     }
-
-    public function processRegistrationUser($request)
-    {
-        try{
-
-            $user = AuthService::registerUser($request);
-
-            return $user;
-
-        }catch(\Exception $e){
-            return false;
-        }
-    }
-
-        public function processLoginAdminSuperadmin($request)
+        
+    public function processLoginAdminSuperadmin($request)
     {
         try {
             $user = AuthService::loginAdminSuperadmin($request);
@@ -46,7 +33,8 @@ trait AuthUser
             return false;
         }
     }
-        public function processUser($request)
+        
+    public function processUser($request)
     {
         try {
 
@@ -56,7 +44,7 @@ trait AuthUser
                 return false;
             }
 
-            if (!Hash::check($request->pin, $user->pin)) {
+            if (!Hash::check($request->password, $user->password)) {
                 return false;
             }
 
@@ -69,7 +57,8 @@ trait AuthUser
             return false;
         }
     }
-        public function processcompleteUserProfile($request)
+        
+    public function processcompleteUserProfile($request)
     {
         try {
             $user = Completeprofile::completeUserProfile($request);
@@ -79,4 +68,33 @@ trait AuthUser
             return false;
         }
     }
+        
+    public function isOtpRequired($user, $browserHash)
+    {
+        $lastVerification = Otpverification::where('user_id', $user->id)
+            ->where('browser_hash', $browserHash)
+            ->latest()
+            ->first();
+
+        if (!$lastVerification) {
+            return true; // No previous verification, OTP required
+        }
+
+        $otpExpired = now()->diffInDays($lastVerification->verified_at) > 7;
+        $browserChanged = $lastVerification->browser_hash !== $browserHash;
+
+        return $otpExpired || $browserChanged;
+    }
+        
+    public function storeOtpVerification($user, $otp)
+    {
+        Otpverification::updateOrCreate(
+            ['user_id' => $user],
+            [
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(5),
+            ]
+        );
+    }
+
 }
