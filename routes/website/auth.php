@@ -8,8 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 //----------------------------------------------Without middlware routes--------------------------------------------------------------
 
+Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
+Route::get('/country-codes', function () {
+    return response()->json(config('country_codes'));
+});
 
-    Route::post('/login-superadmin-admin', [AuthController::class, 'loginSuperadminAdmin']);
+    Route::post('/login', [AuthController::class, 'loginSuperadminAdmin']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1'); ;
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
@@ -35,10 +39,6 @@ use Illuminate\Support\Facades\Log;
         
         
         Route::middleware('role:superadmin')->group(function () {
-            Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
-            Route::get('/country-codes', function () {
-                return response()->json(config('country_codes'));
-            });
     });
 
 

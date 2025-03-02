@@ -162,9 +162,9 @@ class AuthController extends Controller
                 ]);
             }
 
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Invalid credentials'], 401);
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return response()->json(['error' => $th->validator->errors()], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Something went wrong!',
@@ -506,7 +506,7 @@ class AuthController extends Controller
             }
     
             $otp = GenerateOtp::GenereateOtp();
-            $this->storeOtpVerification($user,$otp);
+            $this->storeOtpVerification($user->id,$otp);
     
             if ($request->contact_type === 'phone') {
                 // Check if the user has a valid phone number
@@ -615,7 +615,7 @@ class AuthController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $e->validator->errors()
+                'error' => $e->validator->errors()
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
