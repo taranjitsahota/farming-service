@@ -46,7 +46,7 @@ class EligibilityController extends Controller
                 ->first();
     
             if (!$area) {
-                return response()->json(['message' => 'Service not available in this area'], 404);
+                return $this->errorResponse('Service not available in this area', 401);
             }
     
             // Check if the service exists in the serviceareas table for this area
@@ -54,19 +54,12 @@ class EligibilityController extends Controller
                 ->where('service_id', $request->service_id)
                 ->exists();
     
-            return response()->json([
-                'service_available' => $serviceExists
-            ]);
+                return $this->responseWithSuccess([$serviceExists],'Service availability checked successfully', 200);
+          
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'error' => 'Validation failed',
-                'messages' => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Something went wrong',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
  

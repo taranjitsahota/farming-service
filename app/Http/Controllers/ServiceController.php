@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -45,22 +44,14 @@ class ServiceController extends Controller
 
             $service = Service::create($validated);
 
-            return response()->json([
-                'message' => 'Service created successfully',
-                'service' => $service
-            ], 201);
+            return $this->responseWithSuccess($service, 'Service created successfully', 201);
+           
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation Error',
-                'errors'  => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -88,20 +79,11 @@ class ServiceController extends Controller
         try {
             $service = Service::findOrFail($id);
 
-            return response()->json([
-                'service' => $service
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Service not found'
-            ], 404);
+            return $this->responseWithSuccess($service, 'Service fetched successfully', 200);
+            
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -149,27 +131,13 @@ class ServiceController extends Controller
 
             $service->update($validated);
 
-            return response()->json([
-                'message' => 'Service updated successfully',
-                'service' => $service
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Service not found'
-            ], 404);
+            return $this->responseWithSuccess($service, 'Service updated successfully', 200);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation Error',
-                'errors'  => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -198,20 +166,11 @@ class ServiceController extends Controller
             $service = Service::findOrFail($id);
             $service->delete();
 
-            return response()->json([
-                'message' => 'Service deleted successfully'
-            ], 200);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Service not found'
-            ], 404);
+            return $this->responseWithSuccess([], 'Service deleted successfully', 200);
+          
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 

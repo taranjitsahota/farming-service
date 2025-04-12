@@ -26,12 +26,9 @@ class AreaController extends Controller
     {
         try {
             $area = Area::all();
-            return response()->json($area, 200);
+            return $this->successResponse($area, 'Areas retrieved successfully', 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -75,18 +72,12 @@ class AreaController extends Controller
     
             $area = Area::create($validated);
     
-            return response()->json(['message' => 'Area created successfully', 'area' => $area]);
+            return $this->successResponse($area, 'Area created successfully', 201);
     
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation Error',
-                'errors'  => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+           return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -113,12 +104,10 @@ class AreaController extends Controller
     {
         try {
             $area = Area::findOrFail($id);
-            return response()->json($area, 200);
+            return $this->successResponse($area, 'Area fetched successfully', 200);
+
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -161,17 +150,12 @@ class AreaController extends Controller
 
         $area = Area::findOrFail($id);
         $area->update($request->all());
-        return response()->json($area, 200);
+        return $this->successResponse($area, 'Area updated successfully', 200);
+
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -197,12 +181,10 @@ class AreaController extends Controller
         try {
         $area = Area::findOrFail($id);
         $area->delete();
-        return response()->json(['message' => 'Area soft deleted'], 200);
+        return $this->successResponse([], 'Area deleted successfully', 200);
+
         }catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 }

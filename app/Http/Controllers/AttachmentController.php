@@ -24,12 +24,10 @@ class AttachmentController extends Controller
     {
         try {
             $attachments = Attachment::all();
-            return response()->json($attachments, 200);
+            return $this->successResponse($attachments, 'attachments fetched successfully', 200);
+
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -65,21 +63,13 @@ class AttachmentController extends Controller
             ]);
 
             $attachment = Attachment::create($validated);
+            return $this->successResponse($attachment, 'Attachment created successfully.', 201);
 
-            return response()->json([
-                'message' => 'Attachment created successfully.',
-                'data' => $attachment,
-            ], 201);
+           
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -101,12 +91,9 @@ class AttachmentController extends Controller
     {
         try {
             $attachment = Attachment::findOrFail($id);
-            return response()->json($attachment, 200);
+            return $this->successResponse($attachment, 'Attachment fetched successfully.', 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -145,20 +132,12 @@ class AttachmentController extends Controller
 
             $attachment->update($validated);
 
-            return response()->json([
-                'message' => 'Attachment updated successfully.',
-                'data' => $attachment,
-            ], 200);
+            return $this->successResponse($attachment, 'Attachment updated successfully.', 200);
+            
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $e->errors()
-            ], 422);
+           return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -182,14 +161,10 @@ class AttachmentController extends Controller
             $attachment = Attachment::findOrFail($id);
             $attachment->delete(); // Soft delete
 
-            return response()->json([
-                'message' => 'Attachment deleted successfully.',
-            ], 200);
+            return $this->successResponse([], 'Attachment deleted successfully.', 200);
+            
         }catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 }

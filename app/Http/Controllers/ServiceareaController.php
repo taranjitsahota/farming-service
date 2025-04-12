@@ -28,7 +28,7 @@ class ServiceAreaController extends Controller
      */
     public function index()
     {
-        return response()->json(ServiceArea::all(), 200);
+        return $this->responseWithSuccess(ServiceArea::all(), 'Service areas fetched successfully', 200);
     }
 
     /**
@@ -62,22 +62,13 @@ class ServiceAreaController extends Controller
             // Create the service area entry
             $serviceArea = ServiceArea::create($validated);
 
-            return response()->json([
-                'message' => 'Service area created successfully',
-                'data'    => $serviceArea
-            ], 201);
+            return $this->responseWithSuccess($serviceArea, 'Service area created successfully', 201);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors'  => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -103,7 +94,7 @@ class ServiceAreaController extends Controller
     public function show($id)
     {
         $serviceArea = ServiceArea::findOrFail($id);
-        return response()->json($serviceArea, 200);
+        return $this->responseWithSuccess($serviceArea, 'Service area fetched successfully', 200);
     }
 
     /**
@@ -148,22 +139,13 @@ class ServiceAreaController extends Controller
             // Update only provided values
             $serviceArea->update($validated);
     
-            return response()->json([
-                'message' => 'Service area updated successfully',
-                'data'    => $serviceArea
-            ], 200);
+            return $this->responseWithSuccess($serviceArea, 'Service area updated successfully', 200);
     
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors'  => $e->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->errors());
     
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error'   => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
     
@@ -188,8 +170,13 @@ class ServiceAreaController extends Controller
      */
     public function destroy($id)
     {
+        try{
         $serviceArea = ServiceArea::findOrFail($id);
         $serviceArea->delete();
-        return response()->json(['message' => 'Service area soft deleted'], 200);
+        return $this->successResponse([], 'Service area deleted successfully', 200);
+
+        }catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
     }
 }

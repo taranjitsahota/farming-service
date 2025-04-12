@@ -70,25 +70,23 @@ class AuthController extends Controller
             $user = $this->register($request,$request->role);
 
             if ($user) {
-                return response()->json([
-                    'message' => 'User registered successfully!',
-                ], 201);
+
+                return $this->responseWithSuccess([$user], 'User registered successfully',201);
+
             } else {
-                return response()->json([
-                    'message' => 'User registration failed!',
-                ], 500);
+
+                return $this->responseWithError('User registration failed!', 500);
+        
             }
 
         } catch (\Illuminate\Validation\ValidationException $th) {
 
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
 
         } catch (\Exception $e) {
 
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+            
 
         }
     }
@@ -140,11 +138,13 @@ class AuthController extends Controller
                     SendOtp::SendOtpMail($user->email,$otp);
                     $this->storeOtpVerification($user->id,$otp);
 
-                    return response()->json([
-                        'message' => 'OTP has been sent to your email. Please verify it.',
-                        'otp_sent' => true,
+                    $data = [
                         'user_id' => $user->id,
-                    ]);
+                        'otp' => $otp
+                    ];
+
+                    return $this->responseWithSuccess([$data], 'OTP has been sent to your email. Please verify it.',200);
+                    
                 }
                 
 
@@ -152,24 +152,24 @@ class AuthController extends Controller
                 $token = $user->createToken('AdminToken')->plainTextToken;
                 $trimmedToken = explode('|', $token)[1];
 
-                return response()->json([
-                    'message' => 'Login successful',
+                $data = [
                     'token' => $trimmedToken,
                     'id' => $user->id,
-                    'username' => $user->name,
+                    'name' => $user->name,
+                    'email' => $user->email,
                     'role' => $user->role,
-                    'profile_completed' => $user->profile_completed,
-                ]);
+                    'profile_completed' => $user->profile_completed
+                ];
+
+                return $this->responseWithSuccess([$data], 'Logged in successfully',200);
+
             }
 
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return $this->responseWithError('Invalid credentials', 401, []);
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['error' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -213,21 +213,14 @@ class AuthController extends Controller
             $user = $this->register($request,null);
 
             if ($user) {
-                return response()->json([
-                    'message' => 'User registered successfully!',
-                ], 201);
+                return $this->responseWithSuccess([], 'User registered successfully',201);
             } else {
-                return response()->json([
-                    'message' => 'User registration failed!',
-                ]); 
+                return $this->responseWithError('User registration failed!', 500);
             }
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -280,17 +273,12 @@ class AuthController extends Controller
 
             $this->processcompleteUserProfile($request);
         
-
-            return response()->json([
-                'message' => 'Profile completed successfully!',
-            ], 200);
+            return $this->responseWithSuccess([], 'Profile completed successfully!',200);
+            
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
@@ -329,27 +317,26 @@ class AuthController extends Controller
         $result = $this->processUser($request);
 
         if (!$result) {
-            return response()->json(['error' => 'Invalid PIN or contact number'], 401);
+            return $this->responseWithError('Invalid PIN or contact number', 401);
+            
         }
 
         [$user, $trimmedToken] = $result;
         
-            return response()->json([
-                'message' => 'Login successful',
-                'token' => $trimmedToken,
-                'username' => $user->name,
-                'id' => $user->id,
-                'profile_completed' => $user->profile_completed,
-                'role' => $user->role,
-            ], 200);
+        $data = [
+            'id' => $user->id,
+            'token' => $trimmedToken,
+            'username' => $user->name,
+            'role' => $user->role,
+            'profile_completed' => $user->profile_completed
+        ];
+        return $this->responseWithSuccess([$data], 'Login successful',200);
+
 
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Invalid PIN',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Invalid Pin', 500, $e->getMessage());
         }
     }
     
@@ -414,7 +401,8 @@ class AuthController extends Controller
             $otpVerified = VerifyOtp::verifyOtp($request->user_id, $request->otp);
         
             if (!$otpVerified) {
-                return response()->json(['message' => 'Invalid or expired OTP'], 400);
+                return $this->responseWithError('Invalid or expired OTP', 400, []);
+                
             }
         
             $browserHash = hash('sha256', $request->header('User-Agent') . $request->ip());
@@ -429,7 +417,8 @@ class AuthController extends Controller
         
             $user = User::find($request->user_id);
             if (!$user) {
-                return response()->json(['message' => 'User not found'], 422);
+                return $this->responseWithError('User not found', 422, []);
+                
             }
         
             if ($request->type === 'login') {
@@ -438,29 +427,28 @@ class AuthController extends Controller
     
             $token = $user->createToken('LaravelApp')->plainTextToken;
             $trimmedToken = explode('|', $token)[1];
-        
-            return response()->json([
-                'message' => 'OTP verified successfully. Login successful.',
-                'token' => $trimmedToken,
+
+            $data = [
                 'id' => $user->id,
+                'token' => $trimmedToken,
                 'username' => $user->name,
                 'role' => $user->role,
-                'profile_completed' => $user->profile_completed,
-            ], 200);
+                'profile_completed' => $user->profile_completed
+            ];
+    
+            return $this->responseWithSuccess([$data], 'OTP verified successfully. Login successfull.',200);
+        
     
         }
     
-        return response()->json([
-            'message' => 'OTP verified successfully. Proceed to reset password.',
-        ], 200);
+        return $this->responseWithSuccess([], 'OTP verified successfully. Proceed to reset password.',200);
         
         } catch (\Illuminate\Validation\ValidationException $th) {
-             return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
+             
         } catch (\Exception $e) {
-             return response()->json([
-                 'message' => 'Something went wrong!',
-                 'error' => $e->getMessage(),
-             ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        
         }
     }
      
@@ -502,7 +490,7 @@ class AuthController extends Controller
             $user = User::find($request->user_id);
     
             if (!$user) {
-                return response()->json(['message' => 'User not found.'], 422);
+                return $this->responseWithError('User not found', 422, []);
             }
     
             $otp = GenerateOtp::GenereateOtp();
@@ -511,34 +499,32 @@ class AuthController extends Controller
             if ($request->contact_type === 'phone') {
                 // Check if the user has a valid phone number
                 if (!$user->contact_number) {
-                    return response()->json(['message' => 'Phone number not found for this user.'], 400);
+                    return $this->responseWithError('Phone number not found for this user', 400, []);
                 }
     
                 $messageSid = SendOtp::sendOtpPhone($user->full_phone_number,$otp);
-    
-                return response()->json([
-                    'message' => 'New OTP sent to your phone.',
+
+                $data = [
                     'sid' => $messageSid
-                ], 200);
+                ];
+    
+                return $this->responseWithSuccess([$data], 'New OTP sent to your phone.',200);
+
             } 
             else {
                 // Check if the user has a valid email
                 if (!$user->email) {
-                    return response()->json(['message' => 'Email not found for this user.'], 400);
+                    return $this->responseWithError('Email not found for this user.', 400, []);
                 }
     
                 SendOtp::SendOtpMail($user->email,$otp);
     
-                return response()->json([
-                    'message' => 'New OTP sent to your email.'
-                ], 200);
+                return $this->responseWithSuccess([], 'New OTP sent to your email.',200);
+
             }
     
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
     
@@ -587,7 +573,8 @@ class AuthController extends Controller
             $requestCount = Cache::get($cacheKey, 0);
             
             if ($requestCount >= 5) {
-                return response()->json(['message' => 'Too many OTP requests, try again later'], 429);
+                return $this->responseWithError('Too many OTP requests, try again later', 429, []);
+
             }
             
             
@@ -598,7 +585,8 @@ class AuthController extends Controller
             User::where('email', $contact)->first();
             
             if (!$user) {
-                return response()->json(['message' => 'User not registered with us.'], 401);
+                return $this->responseWithError('User not registered with us.', 401, []);
+                
             }
             
             $otp = GenerateOtp::GenereateOtp();
@@ -606,22 +594,17 @@ class AuthController extends Controller
             
             if ($contactType === 'phone') {
                 dispatch(new SendOtpJob($user->full_phone_number, $otp,$contactType));
-                return response()->json(['message' => 'OTP sent successfully via phone','user_id'=>$user->id], 200);
+                return $this->responseWithSuccess(['user_id' => $user->id], 'OTP sent successfully via phone', 200);
+
             } else {
                 dispatch(new SendOtpJob($user->email, $otp,$contactType));
-                return response()->json(['message' => 'OTP sent successfully via email','user_id'=>$user->id], 200);
+                return $this->responseWithSuccess(['user_id' => $user->id], 'OTP sent successfully via email', 200);
             }
             
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'error' => $e->validator->errors()
-            ], 422);
+            return $this->responseWithError('Validation failed', 422, $e->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong, please try again later',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
     
@@ -673,7 +656,7 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'user_id' => 'required|exists:users,id',
-                'new_password' => 'required|string|confirmed|min:6',
+                'new_password' => 'required|string|confirmed|min:8',
                 'type' => 'required|in:first_time,forgot_password,change_password',
                 'old_password' => Rule::requiredIf($request->type === 'change_password'), // Require old password only for change_password
             ]);
@@ -681,13 +664,13 @@ class AuthController extends Controller
             $user = User::find($request->user_id);
             
             if (!$user) {
-                return response()->json(['message' => 'User not found.'], 422);
+                return $this->responseWithError('User not found', 422, []);
             }
             
             // Ensure old password is verified only for password change, not first-time setup or forgot password
             if ($request->type === 'change_password') {
                 if (!Hash::check($request->old_password, $user->password)) {
-                    return response()->json(['message' => 'Old password is incorrect.'], 400);
+                    return $this->responseWithError('Old password is incorrect.', 400, []);
                 }
             }
             
@@ -698,15 +681,12 @@ class AuthController extends Controller
             // Logout all sessions after password change
             $user->tokens()->delete();
             
-            return response()->json(['message' => 'Password updated successfully. Proceed to Login'], 200);
+            return $this->responseWithSuccess([], 'Password updated successfully. Proceed to Login', 200);
             
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return response()->json(['errors' => $th->validator->errors()], 422);
+            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Something went wrong!',
-                'error' => $e->getMessage(),
-            ], 500);
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
     
@@ -729,22 +709,17 @@ class AuthController extends Controller
            $user = $request->user();
     
            if (!$user) {
-               return response()->json(['message' => 'Unauthorized.'], 401);
+            return $this->responseWithError('Unauthorized', 401);
+               
            }
     
            // Revoke all tokens for the user
            $user->tokens()->delete();
     
-           return response()->json([
-               'message' => 'Logged out successfully.',
-               'status' => true
-           ], 200);
+           return $this->responseWithSuccess([], 'Logged out successfully.', 200);
            
        } catch (\Exception $e) {
-           return response()->json([
-               'message' => 'Something went wrong!',
-               'error' => $e->getMessage(),
-           ], 500);
+        return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
        }
     }
     
