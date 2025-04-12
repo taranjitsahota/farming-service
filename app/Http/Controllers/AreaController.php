@@ -26,7 +26,7 @@ class AreaController extends Controller
     {
         try {
             $area = Area::all();
-            return $this->successResponse($area, 'Areas retrieved successfully', 200);
+            return $this->responseWithSuccess($area, 'Areas retrieved successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -72,7 +72,7 @@ class AreaController extends Controller
     
             $area = Area::create($validated);
     
-            return $this->successResponse($area, 'Area created successfully', 201);
+            return $this->responseWithSuccess($area, 'Area created successfully', 201);
     
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
@@ -104,7 +104,7 @@ class AreaController extends Controller
     {
         try {
             $area = Area::findOrFail($id);
-            return $this->successResponse($area, 'Area fetched successfully', 200);
+            return $this->responseWithSuccess($area, 'Area fetched successfully', 200);
 
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
@@ -150,7 +150,7 @@ class AreaController extends Controller
 
         $area = Area::findOrFail($id);
         $area->update($request->all());
-        return $this->successResponse($area, 'Area updated successfully', 200);
+        return $this->responseWithSuccess($area, 'Area updated successfully', 200);
 
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
@@ -181,7 +181,7 @@ class AreaController extends Controller
         try {
         $area = Area::findOrFail($id);
         $area->delete();
-        return $this->successResponse([], 'Area deleted successfully', 200);
+        return $this->responseWithSuccess([], 'Area deleted successfully', 200);
 
         }catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());

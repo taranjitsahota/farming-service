@@ -173,7 +173,7 @@ class ServiceAreaController extends Controller
         try{
         $serviceArea = ServiceArea::findOrFail($id);
         $serviceArea->delete();
-        return $this->successResponse([], 'Service area deleted successfully', 200);
+        return $this->responseWithSuccess([], 'Service area deleted successfully', 200);
 
         }catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());

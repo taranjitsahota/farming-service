@@ -24,7 +24,7 @@ class AttachmentController extends Controller
     {
         try {
             $attachments = Attachment::all();
-            return $this->successResponse($attachments, 'attachments fetched successfully', 200);
+            return $this->responseWithSuccess($attachments, 'attachments fetched successfully', 200);
 
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
@@ -63,7 +63,7 @@ class AttachmentController extends Controller
             ]);
 
             $attachment = Attachment::create($validated);
-            return $this->successResponse($attachment, 'Attachment created successfully.', 201);
+            return $this->responseWithSuccess($attachment, 'Attachment created successfully.', 201);
 
            
         } catch (ValidationException $e) {
@@ -91,7 +91,7 @@ class AttachmentController extends Controller
     {
         try {
             $attachment = Attachment::findOrFail($id);
-            return $this->successResponse($attachment, 'Attachment fetched successfully.', 200);
+            return $this->responseWithSuccess($attachment, 'Attachment fetched successfully.', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -132,7 +132,7 @@ class AttachmentController extends Controller
 
             $attachment->update($validated);
 
-            return $this->successResponse($attachment, 'Attachment updated successfully.', 200);
+            return $this->responseWithSuccess($attachment, 'Attachment updated successfully.', 200);
             
         } catch (ValidationException $e) {
            return $this->responseWithError('Validation failed', 422, $e->errors());
@@ -161,7 +161,7 @@ class AttachmentController extends Controller
             $attachment = Attachment::findOrFail($id);
             $attachment->delete(); // Soft delete
 
-            return $this->successResponse([], 'Attachment deleted successfully.', 200);
+            return $this->responseWithSuccess([], 'Attachment deleted successfully.', 200);
             
         }catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
