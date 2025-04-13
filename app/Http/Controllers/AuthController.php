@@ -143,7 +143,7 @@ class AuthController extends Controller
                         'otp' => $otp
                     ];
 
-                    return $this->responseWithSuccess([$data], 'OTP has been sent to your email. Please verify it.',200);
+                    return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.',200);
                     
                 }
                 
@@ -161,7 +161,7 @@ class AuthController extends Controller
                     'profile_completed' => $user->profile_completed
                 ];
 
-                return $this->responseWithSuccess([$data], 'Logged in successfully',200);
+                return $this->responseWithSuccess($data, 'Logged in successfully',200);
 
             }
 
@@ -330,7 +330,7 @@ class AuthController extends Controller
             'role' => $user->role,
             'profile_completed' => $user->profile_completed
         ];
-        return $this->responseWithSuccess([$data], 'Login successful',200);
+        return $this->responseWithSuccess($data, 'Login successful',200);
 
 
         } catch (\Illuminate\Validation\ValidationException $th) {
@@ -339,6 +339,81 @@ class AuthController extends Controller
             return $this->responseWithError('Invalid Pin', 500, $e->getMessage());
         }
     }
+
+    public function sendOtpUser(Request $request)
+    {
+        
+        try{
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'contact_number' => 'required|unique:users|digits:10',
+                'email' => 'nullable|email',
+                'pin' => 'required|min:6|confirmed',
+            ], [
+                'contact_number.unique' => 'You are already registered.',
+            ]);
+
+        $otp = GenerateOtp::GenereateOtp();
+
+        
+        Cache::put("otp_{$request->contact_number}", $otp, now()->addMinutes(5));
+
+        $number = '+91'.$request->contact_number;
+
+        $messageSid = SendOtp::sendOtpPhone($number,$otp);
+
+                $data = [
+                    'sid' => $messageSid
+                ];
+    
+                return $this->responseWithSuccess([], 'OTP sent to your phone successfully.',200);
+
+        // Send OTP logic here (e.g., via Twilio)
+
+        // return $this->responseWithSuccess($otp,'OTP sent successfully', 200);
+
+        }catch (\Illuminate\Validation\ValidationException $th) {
+
+            $firstError = collect($th->validator->errors()->all())->first();
+
+            return $this->responseWithError($firstError, 422, $th->validator->errors());
+        } catch(\Exception $e){
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function verifyOtpUser(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required',
+        ]);
+
+        try{
+        $cachedOtp = Cache::get("otp_{$request->contact_number}");
+            // dd($cachedOtp);
+        if ($cachedOtp != $request->otp) {
+            return response()->json(['message' => 'Invalid OTP'], 400);
+        }
+    
+        // Create user only after OTP verified
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact_number' => $request->contact_number,
+            'country_code' => '+91',
+            'password' => bcrypt($request->pin),
+        ]);
+    
+        Cache::forget("otp_{$request->contact_number}");
+    
+        return $this->responseWithSuccess([], 'User registered successfully', 200);
+
+        }catch(\Exception $e){
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+
     
     //----------------------------------------- Common Functions -------------------------------------------------------
     
@@ -436,7 +511,7 @@ class AuthController extends Controller
                 'profile_completed' => $user->profile_completed
             ];
     
-            return $this->responseWithSuccess([$data], 'OTP verified successfully. Login successfull.',200);
+            return $this->responseWithSuccess($data, 'OTP verified successfully. Login successfull.',200);
         
     
         }
@@ -508,7 +583,7 @@ class AuthController extends Controller
                     'sid' => $messageSid
                 ];
     
-                return $this->responseWithSuccess([$data], 'New OTP sent to your phone.',200);
+                return $this->responseWithSuccess($data, 'New OTP sent to your phone.',200);
 
             } 
             else {
