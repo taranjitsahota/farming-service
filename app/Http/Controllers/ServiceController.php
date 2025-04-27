@@ -8,6 +8,12 @@ use Illuminate\Validation\ValidationException;
 
 class ServiceController extends Controller
 {
+
+    public function index(){
+        $services = Service::all();
+
+        return $this->responseWithSuccess($services, 'Services fetched successfully', 200);
+    }
     /**
      * Store a newly created service in storage.
      * 

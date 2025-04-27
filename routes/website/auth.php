@@ -7,6 +7,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 //----------------------------------------------Without middlware routes--------------------------------------------------------------
+use Illuminate\Support\Facades\Cache;
+
+Route::get('/test-cache', function () {
+    Cache::put('test_key', 'Redis is working!', 600);
+
+    return Cache::get('test_key');
+});
 
 Route::post('/register-superadmin-admin', [AuthController::class, 'registerSuperadminAdmin']);
 Route::get('/country-codes', function () {

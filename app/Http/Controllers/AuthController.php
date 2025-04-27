@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -63,7 +64,8 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:users|max:255',
                 'password' => 'required|string|confirmed|min:8|max:25',
                 'country_code' => 'required|string|max:5',
-                'contact_number' => 'required|unique:users,contact_number|max:15',
+                // 'contact_number' => 'required|unique:users,contact_number|max:15',
+                'contact_number' => 'required|max:15',
                 'role' => 'required|string|max:12',
             ]);
 
@@ -140,7 +142,8 @@ class AuthController extends Controller
 
                     $data = [
                         'user_id' => $user->id,
-                        'otp' => $otp
+                        'otp' => $otp,
+                        'email' => $user->email
                     ];
 
                     return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.',200);
@@ -258,8 +261,8 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'first_name' => 'required|string|max:255',
-                'last_name' => 'nullable|string|max:255',
+                // 'first_name' => 'required|string|max:255',
+                // 'last_name' => 'nullable|string|max:255',
                 'fathers_name' => 'required|string|max:255',
                 'pincode' => 'required|max:25',
                 'village' => 'required|string|max:255',
@@ -346,7 +349,8 @@ class AuthController extends Controller
         try{
             $request->validate([
                 'name' => 'required|string|max:255',
-                'contact_number' => 'required|unique:users|digits:10',
+                // 'contact_number' => 'required|unique:users|digits:10',
+                'contact_number' => 'required|digits:10',
                 'email' => 'nullable|email',
                 'pin' => 'required|min:6|confirmed',
             ], [
@@ -363,10 +367,11 @@ class AuthController extends Controller
         $messageSid = SendOtp::sendOtpPhone($number,$otp);
 
                 $data = [
-                    'sid' => $messageSid
+                    // 'sid' => $messageSid
+                    'otp' => $otp
                 ];
     
-                return $this->responseWithSuccess([], 'OTP sent to your phone successfully.',200);
+                return $this->responseWithSuccess($data, 'OTP sent to your phone successfully.',200);
 
         // Send OTP logic here (e.g., via Twilio)
 
@@ -384,6 +389,7 @@ class AuthController extends Controller
 
     public function verifyOtpUser(Request $request)
     {
+        // add more fields to validate the things
         $request->validate([
             'otp' => 'required',
         ]);
@@ -558,7 +564,7 @@ class AuthController extends Controller
             // Validate request
             $request->validate([
                 'user_id' => 'required|exists:users,id',
-                'contact_type' => 'required|in:email,phone',
+                'contact_type' => 'required|in:email,phone,login',
             ]);
     
             // Find user
@@ -642,23 +648,19 @@ class AuthController extends Controller
             
             $contactType = $request->contact_type;
             $contact = $request->contact;
-            $ipAddress = $request->ip();
             
-            $cacheKey = "otp_requests_{$contact}_{$ipAddress}";
-            $requestCount = Cache::get($cacheKey, 0);
-            
-            if ($requestCount >= 5) {
-                return $this->responseWithError('Too many OTP requests, try again later', 429, []);
+            $key = "otp_attempts:$contact";
 
-            }
-            
-            
-            Cache::put($cacheKey, $requestCount + 1, now()->addMinutes(1));
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return $this->responseWithError('Too many attempts. Try later.', 429);
+        }
+
+        RateLimiter::hit($key, 60);
             
             $user = $contactType === 'phone' ? 
             User::where('contact_number', $contact)->first() : 
             User::where('email', $contact)->first();
-            
+
             if (!$user) {
                 return $this->responseWithError('User not registered with us.', 401, []);
                 
@@ -729,12 +731,30 @@ class AuthController extends Controller
     public function changePassword(Request $request)
     {
         try {
-            $request->validate([
+            $type = $request->input('type');
+
+            $rules = [
                 'user_id' => 'required|exists:users,id',
-                'new_password' => 'required|string|confirmed|min:8',
-                'type' => 'required|in:first_time,forgot_password,change_password',
-                'old_password' => Rule::requiredIf($request->type === 'change_password'), // Require old password only for change_password
-            ]);
+                'type' => 'required|in:change_password,forgot_password',
+                'new_password' => [
+                    'required',
+                    'string',
+                    'confirmed',
+                    $type === 'change_password' ? 'min:8' : 'min:6',
+                ],
+            ];
+
+            if ($type === 'change_password') {
+                $rules['old_password'] = 'required|string';
+            }
+
+            $request->validate($rules);
+            // $request->validate([
+            //     'user_id' => 'required|exists:users,id',
+            //     'new_password' => 'required|string|confirmed|min:6',
+            //     'type' => 'required|in:first_time,forgot_password,change_password',
+            //     'old_password' => Rule::requiredIf($request->type === 'change_password'), // Require old password only for change_password
+            // ]);
             
             $user = User::find($request->user_id);
             

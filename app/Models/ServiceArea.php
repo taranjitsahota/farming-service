@@ -9,6 +9,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ServiceArea extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $table = 'serviceareas'; 
+    
     protected $fillable = ['service_id', 'area_id'];    
+
+    public function areas()
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+
 }

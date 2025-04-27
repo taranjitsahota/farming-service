@@ -5,6 +5,8 @@ environments:
         memory: 1024
         cli-memory: 512
         runtime: 'php-8.4:al2'
+        cache: ezykheti-cache
+        queue: database
         build:
             - 'composer install --no-dev'
             - 'php artisan event:cache'
@@ -13,6 +15,8 @@ environments:
         memory: 1024
         cli-memory: 512
         runtime: 'php-8.4:al2'
+        cache: ezykheti-cache
+        queue: database
         build:
             - 'composer install'
             - 'php artisan event:cache'

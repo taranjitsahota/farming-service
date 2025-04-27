@@ -50,7 +50,7 @@ class ServiceAreaController extends Controller
      *     @OA\Response(response=500, ref="#/components/responses/500")
      * )
      */
-        public function store(Request $request)
+    public function store(Request $request)
     {
         try {
             // Validate request
@@ -63,10 +63,8 @@ class ServiceAreaController extends Controller
             $serviceArea = ServiceArea::create($validated);
 
             return $this->responseWithSuccess($serviceArea, 'Service area created successfully', 201);
-
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
-
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -129,26 +127,24 @@ class ServiceAreaController extends Controller
         try {
             // Find the service area, or fail with a 404 error
             $serviceArea = ServiceArea::findOrFail($id);
-    
+
             // Validate the request (only validate fields that are provided)
             $validated = $request->validate([
                 'service_id' => 'sometimes|exists:services,id',
                 'area_id'    => 'sometimes|exists:areas,id',
             ]);
-    
+
             // Update only provided values
             $serviceArea->update($validated);
-    
+
             return $this->responseWithSuccess($serviceArea, 'Service area updated successfully', 200);
-    
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
-    
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-    
+
 
     /**
      * @OA\Delete(
@@ -170,13 +166,27 @@ class ServiceAreaController extends Controller
      */
     public function destroy($id)
     {
-        try{
-        $serviceArea = ServiceArea::findOrFail($id);
-        $serviceArea->delete();
-        return $this->responseWithSuccess([], 'Service area deleted successfully', 200);
-
-        }catch (\Exception $e) {
+        try {
+            $serviceArea = ServiceArea::findOrFail($id);
+            $serviceArea->delete();
+            return $this->responseWithSuccess([], 'Service area deleted successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function checkServiceAvailability(Request $request)
+    {
+        $request->validate([
+            'village_id' => 'required|exists:villages,id',
+        ]);
+
+        $available = ServiceArea::where('village_id', $request->village_id)->exists();
+
+        if ($available) {
+            return $this->responseWithSuccess([], 'We are available in your village.', 200);
+        } else {
+            return $this->responseWithError('We re coming soon in this area', 401);
         }
     }
 }

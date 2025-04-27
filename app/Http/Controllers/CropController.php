@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Models\Crop;
 use Illuminate\Http\Request;
 
 class CropController extends Controller
@@ -11,15 +13,8 @@ class CropController extends Controller
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        $crop = Crop::all();
+        return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
     }
 
     /**
@@ -27,21 +22,19 @@ class CropController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'crop_name' => 'required',
+            'is_enabled' => 'required',
+        ]);
+
+        $crop = Crop::create($request->all());
+        return $this->responseWithSuccess($crop, 'crop created successfully', 200);
     }
 
     /**
      * Display the specified resource.
      */
     public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
     {
         //
     }

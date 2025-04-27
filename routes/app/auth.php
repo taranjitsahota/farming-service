@@ -7,7 +7,7 @@ use App\Http\Controllers\AuthController;
 
 //----------------------------------------------Without middlware routes--------------------------------------------------------------
 
-    Route::post('/register-user', [AuthController::class, 'registerUser']);
+    // Route::post('/register-user', [AuthController::class, 'registerUser']);
     Route::post('/send-otp-user', [AuthController::class, 'sendOtpUser']);
     Route::post('/verify-otp-user', [AuthController::class, 'verifyOtpUser']);
     Route::post('/login-user', [AuthController::class, 'loginUser']);
@@ -17,6 +17,7 @@ use App\Http\Controllers\AuthController;
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1'); ;
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     Route::post('/send-otp', [AuthController::class, 'sendOtpForPasswordReset'])->middleware('throttle:5,1'); // Max 5 requests per minute
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 
 
@@ -25,7 +26,6 @@ use App\Http\Controllers\AuthController;
     Route::middleware('auth:sanctum')->group(function () {
     
         
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/complete-profile', [AuthController::class, 'completeUserProfile']);
 

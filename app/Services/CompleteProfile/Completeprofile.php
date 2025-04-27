@@ -19,7 +19,7 @@ class Completeprofile
             UserInfo::updateOrCreate(
                 ['user_id' => $user->id], 
                 $request->only([
-                    'first_name', 'last_name', 'fathers_name', 'pincode',
+                     'fathers_name', 'pincode',
                     'village', 'post_office', 'police_station', 'district',
                     'total_servicable_land'
                 ])

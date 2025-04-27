@@ -21,13 +21,14 @@ class VillagesImportSeeder extends Seeder
 
         $country = Country::firstOrCreate(['name' => 'India', 'countryCode' => 'IN']);
 
-        // Cache state, district, and city IDs in arrays to reduce queries
         $stateCache = State::where('country_id', $country->id)->pluck('id', 'name')->toArray();
         $cityCache = [];
+        $uniqueCities = [];
         $villageData = [];
 
+        // First pass: gather states and collect unique cities
         foreach ($data as $stateData) {
-            // Check if the state exists in cache, otherwise create it
+            // Create state if not in cache
             if (!isset($stateCache[$stateData['state']])) {
                 $state = State::create([
                     'name' => $stateData['state'],
@@ -41,35 +42,57 @@ class VillagesImportSeeder extends Seeder
             foreach ($stateData['districts'] as $districtData) {
                 foreach ($districtData['subDistricts'] as $subDistrictData) {
                     $cityName = $subDistrictData['subDistrict'];
-
-                    // Check if the city exists in cache, otherwise create it
-                    if (!isset($cityCache[$cityName])) {
-                        $city = City::create([
+                    if (!isset($uniqueCities[$cityName])) {
+                        $uniqueCities[$cityName] = [
                             'name' => $cityName,
                             'state_id' => $stateId,
-                        ]);
-                        $cityCache[$cityName] = $city->id;
-                    }
-
-                    $cityId = $cityCache[$cityName];
-
-                    // Prepare villages for bulk insert
-                    foreach ($subDistrictData['villages'] as $villageName) {
-                        $villageData[] = [
-                            'name' => $villageName,
-                            'city_id' => $cityId,
                         ];
                     }
                 }
             }
         }
 
-        // Bulk insert villages in chunks for better performance
+        // Fetch existing cities
+        $existingCities = City::whereIn('name', array_keys($uniqueCities))->pluck('id', 'name')->toArray();
+
+        // Remove already existing cities
+        $citiesToInsert = array_filter($uniqueCities, function ($city) use ($existingCities) {
+            return !isset($existingCities[$city['name']]);
+        });
+
+        // Bulk insert new cities
+        if (!empty($citiesToInsert)) {
+            City::insert(array_values($citiesToInsert));
+        }
+
+        // Get all cities again after insert
+        $cityCache = City::whereIn('name', array_keys($uniqueCities))->pluck('id', 'name')->toArray();
+
+        // Second pass: prepare village data
+        foreach ($data as $stateData) {
+            $stateId = $stateCache[$stateData['state']];
+
+            foreach ($stateData['districts'] as $districtData) {
+                foreach ($districtData['subDistricts'] as $subDistrictData) {
+                    $cityName = $subDistrictData['subDistrict'];
+                    $cityId = $cityCache[$cityName] ?? null;
+
+                    if ($cityId) {
+                        foreach ($subDistrictData['villages'] as $villageName) {
+                            $villageData[] = [
+                                'name' => $villageName,
+                                'city_id' => $cityId,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Insert villages in chunks
         $chunkSize = 500;
         foreach (array_chunk($villageData, $chunkSize) as $chunk) {
             Village::insert($chunk);
         }
-
-
     }
 }

@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Crop extends Model
+class Equipment extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'crop_name',
+        'name',
+        'image',
+        'price_per_canal',
+        'min_kanal',
         'is_enabled',
     ];
+    
 }

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('serviceareas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('service_id'); // Service ID
-            $table->unsignedBigInteger('area_id'); // Area ID
+            $table->unsignedBigInteger('area_id');
             $table->softDeletes();
             $table->timestamps();
         
