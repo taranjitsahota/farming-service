@@ -5,9 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends Model
+class RazorPay extends Model
 {
     use HasFactory;
-
-    protected $fillable = ['name', 'category', 'min_area', 'minutes_per_kanal', 'price', 'is_enabled'];
 }

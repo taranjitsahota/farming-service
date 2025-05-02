@@ -42,8 +42,10 @@ class ServiceController extends Controller
     {
         try {
             $validated = $request->validate([
-                'service_name' => 'required|string|max:255',
-                'description'  => 'nullable|string|max:1000',
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
+                'min_area' => 'required|numeric',
+                'minutes_per_kanal' => 'required|numeric',
                 'price'         => 'required|numeric',
                 'is_enabled'    => 'boolean'
             ]);
@@ -129,10 +131,12 @@ class ServiceController extends Controller
             $service = Service::findOrFail($id);
 
             $validated = $request->validate([
-                'service_name' => 'sometimes|string|max:255',
-                'description'  => 'sometimes|string|max:1000',
-                'price'        => 'sometimes|numeric',
-                'is_enabled'   => 'sometimes|boolean'
+                'name' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
+                'min_area' => 'required|numeric',
+                'minutes_per_kanal' => 'required|numeric',
+                'price'         => 'required|numeric',
+                'is_enabled'    => 'boolean'
             ]);
 
             $service->update($validated);

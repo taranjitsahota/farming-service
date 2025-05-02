@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -46,6 +47,7 @@ Route::get('/country-codes', function () {
         
         
         Route::middleware('role:superadmin')->group(function () {
+            Route::get('/admin-list', [UserController::class, 'adminList']);
     });
 
 
