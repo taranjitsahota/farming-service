@@ -48,10 +48,19 @@ class BookingController extends Controller
             if ($currentDateTime->copy()->addDay()->gt($businessEndDateTime)) {
                 return $this->responseWithError('Business hours have ended for the selected date.', 422);
             }
-        
+
+            $startReference = $currentDateTime->copy()->addDay();
+            $minute = $startReference->minute;
+
+            if ($minute < 30) {
+                $startReference->minute(0);
+            } else {
+                $startReference->addHour()->minute(0);
+            }
+
             $dayStartTime = max(
                 Carbon::parse($requestedDate . ' ' . $businessTiming->start_time),
-                $currentDateTime->copy()->addDay()
+                $startReference
             );
         }
         // Case 2: Booking for a future day beyond 24 hours
@@ -69,16 +78,18 @@ class BookingController extends Controller
 
         // Get bookings for the selected day
         $bookings = Booking::where('slot_date', $requestedDate)
+            ->where('service_id', $service->id)
             ->orderBy('start_time')
             ->get()
-            ->map(function ($booking) use ($buffer_minutes) {
-                $booking->start_time = Carbon::parse($booking->start_time)->subMinutes($buffer_minutes);
-                $booking->end_time = Carbon::parse($booking->end_time)->addMinutes($buffer_minutes);
+            ->map(function ($booking) use ($requestedDate, $buffer_minutes) {
+                $booking->start_time = Carbon::parse($requestedDate . ' ' . Carbon::parse($booking->start_time)->format('H:i'))->subMinutes($buffer_minutes);
+                $booking->end_time = Carbon::parse($requestedDate . ' ' . Carbon::parse($booking->end_time)->format('H:i'))->addMinutes($buffer_minutes);
                 return $booking;
             });
 
         $slots = [];
         $current_start = $dayStartTime->copy();
+
 
         while ($current_start->addMinutes(0)->lt($dayEndTime)) {
             $slot_end = $current_start->copy()->addMinutes($total_minutes);
