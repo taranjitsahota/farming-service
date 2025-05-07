@@ -20,6 +20,9 @@ return new class extends Migration
             $table->date('slot_date');
             $table->time('start_time');
             $table->time('end_time');
+            $table->string('address')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->text('user_note')->nullable();
             $table->decimal('price', 10, 2);
             $table->string('payment_method')->nullable();
