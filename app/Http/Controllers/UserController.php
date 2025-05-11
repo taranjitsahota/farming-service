@@ -122,8 +122,9 @@ class UserController extends Controller
             ]);
 
             $path = $request->file('file')->store("users/{$request->user()->id}", 's3');
-
-            $url = Storage::disk('s3')->url($path);
+            /** @var \Illuminate\Contracts\Filesystem\Cloud $disk */
+            $disk = Storage::disk('s3');
+            $url = $disk->url($path);
             $user = $request->user();
             $user->profile_photo_url = $url;
             $user->profile_photo_path = $path;
@@ -139,27 +140,24 @@ class UserController extends Controller
     {
         try {
             $user = User::find($id);
-    
+
             if (!$user || !$user->profile_photo_path) {
                 return $this->responseWithError('Profile photo not found', 404);
             }
-    
+
             $path = $user->profile_photo_path;
-    
+
             if (Storage::disk('s3')->exists($path)) {
                 Storage::disk('s3')->delete($path);
             }
-    
+
             $user->profile_photo_path = null;
             $user->profile_photo_url = null;
             $user->save();
-    
+
             return $this->responseWithSuccess($user, 'Profile picture deleted successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-    
-    
-    
 }
