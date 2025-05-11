@@ -512,7 +512,7 @@ class AuthController extends Controller
             $data = [
                 'id' => $user->id,
                 'token' => $trimmedToken,
-                'username' => $user->name,
+                'name' => $user->name,
                 'role' => $user->role,
                 'profile_completed' => $user->profile_completed
             ];

@@ -10,8 +10,51 @@ use Illuminate\Support\Carbon;
 
 class BookingController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $user = auth()->user();
+        $bookings = Booking::where('user_id', $user->id)
+            ->with(['service', 'user', 'crop', 'servicearea'])
+            ->get();
 
+        return $this->responseWithSuccess($bookings, 'Bookings fetched successfully', 200);
+    }
 
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $bookings = Booking::find($id)->with('service')->with('user')->with('crop')->with('service')->with('servicearea');
+        return $this->responseWithSuccess($bookings, 'Bookings fetched successfully', 200);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
     public function getAvailableSlots(Request $request)
     {
         try {
@@ -82,10 +125,10 @@ class BookingController extends Controller
                 ->where('service_id', $service->id)
                 ->where(function ($q) {
                     $q->where('status', 'confirmed')
-                      ->orWhere(function ($q2) {
-                          $q2->where('status', 'pending')
-                              ->where('reserved_until', '>', now());
-                      });
+                        ->orWhere(function ($q2) {
+                            $q2->where('status', 'pending')
+                                ->where('reserved_until', '>', now());
+                        });
                 })
                 ->orderBy('start_time')
                 ->get()
@@ -171,75 +214,6 @@ class BookingController extends Controller
         ], 'Estimated payment calculated successfully');
     }
 
-    // public function bookSlot(Request $request)
-    // {
-    //     try {
-    //         $request->validate([
-    //             'date' => 'required|date',
-    //             'crop_id' => 'required|exists:crops,id',
-    //             'area_id' => 'required|exists:areas,id',
-    //             'service_id' => 'required|exists:services,id',
-    //             'area' => 'required|numeric|min:1',
-    //             'start_time' => 'required',
-    //         ]);
-
-    //         $service = Service::findOrFail($request->service_id);
-
-    //         if ($service->min_area && $request->area < $service->min_area) {
-    //             return $this->responseWithError('Minimum area is ' . $service->min_area . ' kanals', 422);
-    //         }
-
-    //         $slotDateTime = Carbon::parse($request->date . ' ' . $request->start_time);
-    //         if (now()->diffInMinutes($slotDateTime, false) < 1440) {
-    //             return $this->responseWithError('Bookings must be made at least 24 hours in advance.', 422);
-    //         }
-
-    //         $buffer_minutes = 30;
-
-    //         $start_time = Carbon::parse($request->start_time);
-    //         $end_time = $start_time->copy()->addMinutes($request->area * $service->minutes_per_kanal);
-
-    //         // Extend user's slot with buffer on both sides
-    //         $buffered_user_start = $start_time->copy()->subMinutes($buffer_minutes);
-    //         $buffered_user_end = $end_time->copy()->addMinutes($buffer_minutes);
-
-    //         // Check for conflicts with existing bookings + buffer
-    //         $conflict = Booking::where('slot_date', $request->date)
-    //             ->where(function ($q) use ($buffered_user_start, $buffered_user_end) {
-    //                 $q->whereBetween('start_time', [$buffered_user_start, $buffered_user_end])
-    //                     ->orWhereBetween('end_time', [$buffered_user_start, $buffered_user_end])
-    //                     ->orWhere(function ($q2) use ($buffered_user_start, $buffered_user_end) {
-    //                         $q2->where('start_time', '<=', $buffered_user_start)
-    //                             ->where('end_time', '>=', $buffered_user_end);
-    //                     });
-    //             })
-    //             ->exists();
-
-    //         if ($conflict) {
-    //             return $this->responseWithError('Slot is already booked or too close to another booking (30-min buffer required)', 422);
-    //         }
-
-    //         $price = $service->price * $request->area;
-
-    //         Booking::create([
-    //             'user_id' => auth()->id(),
-    //             'service_id' => $service->id,
-    //             'crop_id' => $request->crop_id,
-    //             'area_id' => $request->area_id,
-    //             'slot_date' => $request->date,
-    //             'start_time' => $start_time->format('H:i'),
-    //             'end_time' => $end_time->format('H:i'),
-    //             'area' => $request->area,
-    //             'price' => $price,
-    //         ]);
-
-    //         return $this->responseWithSuccess([], 'Slot Booked Successfully', 200);
-    //     } catch (\Illuminate\Validation\ValidationException $e) {
-    //         return $this->responseWithError('Validation failed', 422, $e->errors());
-    //     } catch (\Exception $e) {
-    //         return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
-    //     }
-    // }
     public function bookSlot(Request $request)
     {
         try {
@@ -307,12 +281,71 @@ class BookingController extends Controller
                 'slot_date' => $request->slot_date,
                 'start_time' => $start,
                 'end_time' => $end,
+                'duration' => $duration,
                 'service_area_id' => $area,
                 'status' => 'pending',
                 'reserved_until' => now()->addMinutes(15)
             ]);
 
             return $this->responseWithSuccess(['booking_id' => $booking->id], 'Slot reserved. Proceed to payment.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->responseWithError('Validation failed', 422, $e->errors());
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function cancelBooking(Request $request)
+    {
+        // dd($request->all());
+        try {
+            $request->validate([
+                'booking_id' => 'required|exists:bookings,id',
+                'cancel_reason' => 'nullable|string|max:255',
+            ]);
+
+            $booking = Booking::find($request->booking_id);
+
+            if ($booking->status == 'cancelled') {
+                return $this->responseWithError('Booking already cancelled', 422);
+            }
+
+            $now = now();
+            $startTime = Carbon::parse($booking->slot_date . ' ' . $booking->start_time);
+            // Check if service is already started or partially used
+            if ($now->greaterThanOrEqualTo($startTime)) {
+                return $this->responseWithError('Cannot cancel after service started or partially used.', 403);
+            }
+
+            $refundType = 'none';
+            $refundAmount = 0;
+
+            // Check for weather/natural reason
+            if (strtolower($request->cancel_reason) === 'weather') {
+                $refundType = 'full';
+                $refundAmount = $booking->price; // assuming this field exists
+            } else {
+                $diffInMinutes = $startTime->diffInMinutes($now);
+
+                if ($diffInMinutes >= 120) {
+                    $refundType = 'full';
+                    $refundAmount = $booking->price;
+                } elseif ($diffInMinutes < 120) {
+                    $refundType = 'partial';
+                    $refundAmount = $booking->price * 0.80; // 20% charge
+                }
+            }
+            // Update booking status
+            $booking->status = "cancelled";
+            $booking->cancelled_at = now();
+            $booking->cancel_reason = $request->cancel_reason ?? null;
+            $booking->refund_amount = $refundAmount;
+            $booking->refund_status = 'pending'; // Or 'pending'
+            $booking->save();
+
+            // Optionally: dispatch refund job or API call here
+
+            return $this->responseWithSuccess($booking, "Booking cancelled successfully. Refund Type: {$refundType}", 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {

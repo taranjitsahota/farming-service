@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -12,10 +14,10 @@ class UserController extends Controller
      */
     public function index()
     {
-        try{
+        try {
             $user = User::all();
-        return $this->responseWithSuccess($user, 'user fetched successfully', 200);
-        }catch(\Exception $e){
+            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -34,20 +36,20 @@ class UserController extends Controller
             'role' => 'required|string|max:12',
         ]);
 
-        try{
+        try {
             $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'country_code' => $request->country_code,
-            'contact_number' => $request->contact_number,
-            'role' => $request->role
-        ]);
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'country_code' => $request->country_code,
+                'contact_number' => $request->contact_number,
+                'role' => $request->role
+            ]);
 
-        return $this->responseWithSuccess($user, 'User registered successfully',201);
-    }catch(\Exception $e){
-        return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
-    }
+            return $this->responseWithSuccess($user, 'User registered successfully', 201);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
     }
 
     /**
@@ -55,10 +57,10 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        try{
+        try {
             $user = User::find($id);
-        return $this->responseWithSuccess($user, 'user fetched successfully', 200);
-        }catch(\Exception $e){
+            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -70,26 +72,20 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|confirmed|min:8|max:25',
-            'country_code' => 'required|string|max:5',
-            'contact_number' => 'required|unique:users,contact_number|max:15',
-            'role' => 'required|string|max:12',
+            'email' => 'required|email|max:255',
+            // 'password' => 'required|string|confirmed|min:8|max:25',
+            // 'country_code' => 'required|string|max:5',
+            'contact_number' => 'required|max:15',
+            // 'role' => 'required|string|max:12',
         ]);
-
-        try{
+        // dd($request->all());
+        try {
             $user = User::find($id);
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'country_code' => $request->country_code,
-            'contact_number' => $request->contact_number,
-            'role' => $request->role
-        ]);
+            $user->update($request->only(['name', 'email', 'contact_number']));
 
-        return $this->responseWithSuccess($user, 'User updated successfully',201);
-        }catch(\Exception $e){
+
+            return $this->responseWithSuccess($user, 'User updated successfully', 201);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -99,23 +95,71 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        try{
+        try {
             $user = User::find($id);
-        $user->delete();
-        return $this->responseWithSuccess($user, 'User deleted successfully',201);
-        }catch(\Exception $e){
+            $user->delete();
+            return $this->responseWithSuccess($user, 'User deleted successfully', 201);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
     public function adminList()
     {
-        try{
+        try {
             $user = User::where('role', 'admin')->get();
-        return $this->responseWithSuccess($user, 'user fetched successfully', 200);
-        }catch(\Exception $e){
+            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
+    public function uploadProfilePic(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            ]);
+
+            $path = $request->file('file')->store("users/{$request->user()->id}", 's3');
+
+            $url = Storage::disk('s3')->url($path);
+            $user = $request->user();
+            $user->profile_photo_url = $url;
+            $user->profile_photo_path = $path;
+            $user->save();
+
+            return $this->responseWithSuccess($url, 'Profile picture uploaded successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function deleteUploadProfilePic($id)
+    {
+        try {
+            $user = User::find($id);
+    
+            if (!$user || !$user->profile_photo_path) {
+                return $this->responseWithError('Profile photo not found', 404);
+            }
+    
+            $path = $user->profile_photo_path;
+    
+            if (Storage::disk('s3')->exists($path)) {
+                Storage::disk('s3')->delete($path);
+            }
+    
+            $user->profile_photo_path = null;
+            $user->profile_photo_url = null;
+            $user->save();
+    
+            return $this->responseWithSuccess($user, 'Profile picture deleted successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+    
+    
+    
 }

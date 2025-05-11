@@ -20,6 +20,7 @@ return new class extends Migration
             $table->date('slot_date');
             $table->time('start_time');
             $table->time('end_time');
+            $table->string('duration')->nullable();
             $table->string('address')->nullable();
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();

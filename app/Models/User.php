@@ -26,7 +26,9 @@ class User extends Authenticatable
         'role',
         'country_code',
         'contact_number',
-        'profile_completed'
+        'profile_completed',
+        'profile_photo_url',
+        'profile_photo_path',
     ];
 
  
