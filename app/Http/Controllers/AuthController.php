@@ -137,16 +137,22 @@ class AuthController extends Controller
                 if ($otpRequired) {
 
                     $otp = GenerateOtp::GenereateOtp();
-                    SendOtp::SendOtpMail($user->email,$otp);
-                    $this->storeOtpVerification($user->id,$otp);
+                   $sendEmail = SendOtp::SendOtpMail($user->email,$otp);
+                   if($sendEmail){
+                       $this->storeOtpVerification($user->id,$otp);
+                       
+                       
+                       $data = [
+                           'user_id' => $user->id,
+                           'otp' => $otp,
+                           'email' => $user->email
+                        ];
+                        
+                        return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.',200);
+                    }else{
+                        return $this->responseWithError('Something went wrong!', 500);
+                    }
 
-                    $data = [
-                        'user_id' => $user->id,
-                        'otp' => $otp,
-                        'email' => $user->email
-                    ];
-
-                    return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.',200);
                     
                 }
                 
