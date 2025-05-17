@@ -25,8 +25,24 @@ class AreaController extends Controller
     public function index()
     {
         try {
-            $area = Area::all();
-            return $this->responseWithSuccess($area, 'Areas retrieved successfully', 200);
+              $areas = Area::with(['city', 'state', 'village'])->get();
+
+        // Flatten the data
+        $formatted = $areas->map(function ($area) {
+            return [
+                'id'           => $area->id,
+                'village_id'   => $area->village_id,
+                'village_name' => $area->village?->name ?? null,
+                'city_id'      => $area->city_id,
+                'city_name'    => $area->city?->name ?? null,
+                'state_id'     => $area->state_id,
+                'state_name'   => $area->state?->name ?? null,
+                'pincode'      => $area->pincode,
+                'is_enabled'   => $area->is_enabled,
+            ];
+        });
+
+            return $this->responseWithSuccess($formatted, 'Areas retrieved successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -65,7 +81,7 @@ class AreaController extends Controller
             $validated = $request->validate([
                 'city_id'   => 'required|exists:cities,id',
                 'state_id'  => 'required|exists:states,id',
-                'village_id'   => 'required|string|max:255',
+                'village_id'   => 'required|exists:villages,id',
                 'pincode'   => 'nullable|string|max:10',
                 'is_enabled'=> 'boolean'
             ]);
@@ -143,7 +159,7 @@ class AreaController extends Controller
             $validated = $request->validate([
                 'city_id'   => 'sometimes|exists:cities,id',
                 'state_id'  => 'sometimes|exists:states,id',
-                'village_id'   => 'sometimes|string|max:255',
+                'village_id'   => 'sometimes|exists:villages,id',
                 'pincode'   => 'nullable|string|max:10',
                 'is_enabled'=> 'sometimes'
             ]);

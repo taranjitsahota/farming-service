@@ -11,7 +11,7 @@ class Crop extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'crop_name',
+        'name',
         'is_enabled',
     ];
 }

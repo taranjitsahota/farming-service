@@ -11,20 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('areas', function (Blueprint $table) {
+        Schema::create('interested_users', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('city_id'); // References city
-            $table->unsignedBigInteger('state_id'); // References state
-            $table->unsignedBigInteger('village_id'); // Village name (optional)
-            $table->boolean('is_enabled')->default(true); // Enable/Disable status
-            $table->string('pincode')->nullable(); // Pincode of the area
-            $table->softDeletes();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+              $table->unsignedBigInteger('city_id');
+            $table->unsignedBigInteger('state_id');
+            $table->unsignedBigInteger('village_id');
             $table->timestamps();
 
             $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade');
             $table->foreign('state_id')->references('id')->on('states')->onDelete('cascade');
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
-        });        
+        });
     }
 
     /**
@@ -32,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('areas');
+        Schema::dropIfExists('interested_users');
     }
 };

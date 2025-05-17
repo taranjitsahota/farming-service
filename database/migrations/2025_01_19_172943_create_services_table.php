@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+             $table->unsignedBigInteger('equipment_id');
             $table->string('category');
-            $table->decimal('price', 8, 2);
-            $table->integer('min_area');
-            $table->integer('minutes_per_kanal');
             $table->boolean('is_enabled')->default(true);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->foreign('equipment_id')->references('id')->on('equipments')->onDelete('cascade');
+
         });
     }
 

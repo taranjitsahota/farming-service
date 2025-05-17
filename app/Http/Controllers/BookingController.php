@@ -66,11 +66,12 @@ class BookingController extends Controller
 
             $date = Carbon::parse($request->date)->startOfDay();
             $dayOfWeek = $date->format('l');
-            $service = Service::findOrFail($request->service_id);
+            $service = Service::with('equipment')->findOrFail($request->service_id);
+            $equipment = $service->equipment;
             $area = $request->area;
 
-            if ($service->min_area && $area < $service->min_area) {
-                return $this->responseWithError('Minimum area is ' . $service->min_area . ' kanals', 422);
+            if ($equipment->min_kanal && $area < $equipment->min_kanal) {
+                return $this->responseWithError('Minimum area in kanals is ' . $equipment->min_kanal . ' kanals', 422);
             }
 
             // Get business hours
@@ -117,7 +118,7 @@ class BookingController extends Controller
             }
 
             $dayEndTime = Carbon::parse($requestedDate . ' ' . $businessTiming->end_time);
-            $total_minutes = $area * $service->minutes_per_kanal;
+            $total_minutes = $area * $equipment->minutes_per_kanal;
             $buffer_minutes = 30;
 
             // Get bookings for the selected day
@@ -150,26 +151,41 @@ class BookingController extends Controller
                     break;
                 }
 
-                $conflict = false;
-                foreach ($bookings as $booking) {
-                    if (
-                        $slot_end->gt($booking->start_time) &&
-                        $current_start->lt($booking->end_time)
-                    ) {
-                        $current_start = $booking->end_time->copy(); // move to next slot after booking
-                        $conflict = true;
-                        break;
-                    }
-                }
+                // $conflict = false;
+                // foreach ($bookings as $booking) {
+                //     if (
+                //         $slot_end->gt($booking->start_time) &&
+                //         $current_start->lt($booking->end_time)
+                //     ) {
+                //         $current_start = $booking->end_time->copy(); // move to next slot after booking
+                //         $conflict = true;
+                //         break;
+                //     }
+                // }
 
-                if (!$conflict) {
+                // if (!$conflict) {
+                //     $slots[] = [
+                //         'start_time' => $current_start->format('H:i'),
+                //         'end_time' => $slot_end->format('H:i'),
+                //         'duration_required_minutes' => $total_minutes,
+                //     ];
+                //     $current_start = $slot_end->copy(); // move to next slot
+                // }
+                $overlappingCount = $bookings->filter(function ($booking) use ($current_start, $slot_end) {
+                    return $slot_end->gt($booking->start_time) && $current_start->lt($booking->end_time);
+                })->count();
+
+                // If equipment inventory is available, add this slot
+                if ($overlappingCount < $equipment->inventory) {
                     $slots[] = [
                         'start_time' => $current_start->format('H:i'),
                         'end_time' => $slot_end->format('H:i'),
                         'duration_required_minutes' => $total_minutes,
                     ];
-                    $current_start = $slot_end->copy(); // move to next slot
                 }
+
+                // Move to next slot regardless
+                $current_start = $slot_end->copy();
             }
             if (!$slots) {
                 return $this->responseWithError('No slots available', 422);
@@ -196,14 +212,15 @@ class BookingController extends Controller
             'area' => 'required|numeric|min:1'
         ]);
 
-        $service = Service::findOrFail($request->service_id);
+        $service = Service::with('equipment')->findOrFail($request->service_id);
+        $equipment = $service->equipment;
+        // dd($equipment);
         $area = $request->area;
         // Check minimum area allowed
-        if ($service->min_area && $area < $service->min_area) {
-            return $this->responseWithError('Minimum area is ' . $service->min_area . ' kanals', 422);
+        if ($equipment->min_kanal && $area < $equipment->min_kanal) {
+            return $this->responseWithError('Minimum area in kanals is ' . $equipment->min_kanal . ' kanals', 422);
         }
-
-        $rate_per_kanal = $service->price;
+        $rate_per_kanal = $equipment->price_per_kanal;
         $estimated_amount = $area * $rate_per_kanal;
 
         return $this->responseWithSuccess([
@@ -229,10 +246,11 @@ class BookingController extends Controller
             $user = auth()->user();
 
 
-            $service = Service::findOrFail($request->service_id);
+            $service = Service::with('equipment')->findOrFail($request->service_id);
+            $equipment = $service->equipment;
 
-            if ($service->min_area && $request->area < $service->min_area) {
-                return $this->responseWithError('Minimum area is ' . $service->min_area . ' kanals', 422);
+            if ($equipment->min_kanal && $request->area < $equipment->min_kanal) {
+                return $this->responseWithError('Minimum area is ' . $equipment->min_kanal . ' kanals', 422);
             }
 
             $alreadyPending = Booking::where('user_id', $user->id)
@@ -244,32 +262,32 @@ class BookingController extends Controller
                 return $this->responseWithError('You already have a pending booking. Please complete payment.', 422);
             }
 
-            $price = $service->price * $request->area;
+            $price = $equipment->price_per_kanal * $request->area;
             // dd($price);
             $area = $request->area;
-            $duration = $area * $service->minutes_per_kanal;
+            $duration = $area * $equipment->minutes_per_kanal;
             $start = Carbon::parse($request->slot_date . ' ' . $request->start_time);
             $end = $start->copy()->addMinutes($duration);
 
             // Check conflict with confirmed & pending bookings
-            $conflict = Booking::where('slot_date', $request->slot_date)
-                ->where(function ($q) use ($start, $end) {
-                    $q->whereBetween('start_time', [$start, $end])
-                        ->orWhereBetween('end_time', [$start, $end]);
-                })
-                ->where(function ($q) {
-                    $q->where('status', 'confirmed')
-                        ->orWhere(function ($q2) {
-                            $q2->where('status', 'pending')
-                                ->where('reserved_until', '>', now());
-                        });
-                })
-                ->exists();
+            // $conflict = Booking::where('slot_date', $request->slot_date)
+            //     ->where(function ($q) use ($start, $end) {
+            //         $q->whereBetween('start_time', [$start, $end])
+            //             ->orWhereBetween('end_time', [$start, $end]);
+            //     })
+            //     ->where(function ($q) {
+            //         $q->where('status', 'confirmed')
+            //             ->orWhere(function ($q2) {
+            //                 $q2->where('status', 'pending')
+            //                     ->where('reserved_until', '>', now());
+            //             });
+            //     })
+            //     ->exists();
 
 
-            if ($conflict) {
-                return $this->responseWithError('Selected slot is already booked or reserved', 422);
-            }
+            // if ($conflict) {
+            //     return $this->responseWithError('Selected slot is already booked or reserved', 422);
+            // }
 
             // Reserve slot with status 'pending'
             $booking = Booking::create([

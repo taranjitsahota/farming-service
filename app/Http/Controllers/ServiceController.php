@@ -42,11 +42,8 @@ class ServiceController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'equipment_id' => 'required|exists:equipments,id',
                 'category' => 'required|string|max:255',
-                'min_area' => 'required|numeric',
-                'minutes_per_kanal' => 'required|numeric',
-                'price'         => 'required|numeric',
                 'is_enabled'    => 'boolean'
             ]);
 
@@ -131,11 +128,8 @@ class ServiceController extends Controller
             $service = Service::findOrFail($id);
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'equipment_id' => 'required|exists:equipments,id',
                 'category' => 'required|string|max:255',
-                'min_area' => 'required|numeric',
-                'minutes_per_kanal' => 'required|numeric',
-                'price'         => 'required|numeric',
                 'is_enabled'    => 'boolean'
             ]);
 

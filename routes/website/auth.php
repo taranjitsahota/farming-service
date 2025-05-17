@@ -47,7 +47,7 @@ Route::get('/country-codes', function () {
         
         
         Route::middleware('role:superadmin')->group(function () {
-            Route::get('/admin-list', [UserController::class, 'adminList']);
+            
     });
 
 

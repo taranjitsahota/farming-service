@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EquipmentController;
-use Aws\Middleware;
+use App\Http\Controllers\InterestedUserController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:superadmin')->group(function () {
-        Route::apiResource('equipments', EquipmentController::class);
+        Route::apiResource('interested-users', InterestedUserController::class);
     });
 });

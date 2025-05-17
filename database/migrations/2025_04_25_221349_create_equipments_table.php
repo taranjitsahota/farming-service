@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('equipment', function (Blueprint $table) {
+        Schema::create('equipments', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('image')->nullable();
-            $table->decimal('price_per_canal', 8, 2);
+            $table->decimal('price_per_kanal', 8, 2);
             $table->integer('min_kanal');
+            $table->integer('minutes_per_kanal');
+            $table->integer('inventory');
             $table->boolean('is_enabled')->default(true);
             $table->timestamps();
         });
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('equipment');
+        Schema::dropIfExists('equipments');
     }
 };

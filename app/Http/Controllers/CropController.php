@@ -13,8 +13,12 @@ class CropController extends Controller
      */
     public function index()
     {
-        $crop = Crop::all();
-        return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
+        try {
+            $crop = Crop::all();
+            return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        }
     }
 
     /**
@@ -22,13 +26,17 @@ class CropController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'crop_name' => 'required',
-            'is_enabled' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required',
+                'is_enabled' => 'required',
+            ]);
 
-        $crop = Crop::create($request->all());
-        return $this->responseWithSuccess($crop, 'crop created successfully', 200);
+            $crop = Crop::create($request->all());
+            return $this->responseWithSuccess($crop, 'crop created successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        }
     }
 
     /**
@@ -36,15 +44,31 @@ class CropController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $crop = Crop::findOrFail($id);
+            return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function update(Request $request, string $id) {
+
+        try{
+            $request->validate([
+                'name' => 'required',
+                'is_enabled' => 'required',
+            ]);
+
+            $crop = Crop::findOrFail($id);
+            $crop->update($request->all());
+            return $this->responseWithSuccess($crop, 'crop updated successfully', 200);
+        }catch(\Exception $e){
+            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        }
     }
 
     /**
@@ -52,6 +76,12 @@ class CropController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try{
+            $crop = Crop::findOrFail($id);
+            $crop->delete();
+            return $this->responseWithSuccess($crop, 'crop deleted successfully', 200);
+        }catch(\Exception $e){
+            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        }
     }
 }

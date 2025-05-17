@@ -13,8 +13,12 @@ class EquipmentController extends Controller
      */
     public function index()
     {
-        $equipment = Equipment::all();
-        return $this->responseWithSuccess($equipment, 'equipment fetched successfully', 200);
+        try{
+            $equipment = Equipment::all();
+            return $this->responseWithSuccess($equipment, 'equipment fetched successfully', 200);
+        }catch(\Exception $e){
+            return $this->responseWithError($e->getMessage(), 'equipment not found', 404);
+        }
     }
 
     /**
@@ -24,9 +28,11 @@ class EquipmentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'price_per_canal' => 'required|numeric',
+            'price_per_kanal' => 'required|numeric',
             'min_kanal' => 'required|integer',
-            'is_available' => 'required|boolean',
+            // 'is_available' => 'required|boolean',
+            'minutes_per_kanal' => 'required|integer',
+            'inventory' => 'required|integer',
             'image' => 'nullable|url'
         ]);
 
@@ -39,7 +45,12 @@ class EquipmentController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try{
+            $equipment = Equipment::findOrFail($id);
+            return $this->responseWithSuccess($equipment, 'equipment fetched successfully', 200);
+        }catch(\Exception $e){
+            return $this->responseWithError($e->getMessage(), 'equipment not found', 404);
+        }
     }
 
     /**
@@ -48,11 +59,13 @@ class EquipmentController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'price_per_canal' => 'required|numeric',
-            'min_kanal' => 'required|integer',
-            'is_available' => 'required|boolean',
-            'image' => 'nullable|url'
+            // 'name' => 'required|string|max:255',
+            // 'price_per_kanal' => 'required|numeric',
+            // 'min_kanal' => 'required|integer',
+            'is_enabled' => 'required|boolean',
+            // 'minutes_per_kanal' => 'required|integer',
+            // 'inventory' => 'required|integer',
+            // 'image' => 'nullable|url'
         ]);
 
         $equipment = Equipment::findOrFail($id);
@@ -65,6 +78,12 @@ class EquipmentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try{
+            $equipment = Equipment::findOrFail($id);
+            $equipment->delete();
+            return $this->responseWithSuccess(null, 'equipment deleted successfully', 200);
+        }catch(\Exception $e){
+            return $this->responseWithError($e->getMessage(), 'equipment not found', 404);
+        }
     }
 }

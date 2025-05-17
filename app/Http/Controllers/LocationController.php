@@ -25,7 +25,7 @@ class LocationController extends Controller
         return $this->responseWithSuccess($data, 'Cities fetched successfully', 200);
     }
 
-    public function getVillages($city_id)
+    public function getServicableVillages($city_id)
     {
         try{
         $serviceableVillageIds = Area::whereIn(
@@ -44,6 +44,14 @@ class LocationController extends Controller
 
         return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
 
+        }catch(\Exception $e){
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+    public function getVillages($city_id){
+        try{
+        $data = Village::select('id', 'name')->where('city_id', $city_id)->get();
+        return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
         }catch(\Exception $e){
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

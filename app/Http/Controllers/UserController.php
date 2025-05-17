@@ -15,7 +15,7 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $user = User::all();
+            $user = User::where('role', 'user')->get();
             return $this->responseWithSuccess($user, 'user fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
@@ -31,9 +31,9 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users|max:255',
             'password' => 'required|string|confirmed|min:8|max:25',
-            'country_code' => 'required|string|max:5',
+            // 'country_code' => 'required|string|max:5',
             'contact_number' => 'required|unique:users,contact_number|max:15',
-            'role' => 'required|string|max:12',
+            // 'role' => 'required|string|max:12',
         ]);
 
         try {
@@ -110,6 +110,16 @@ class UserController extends Controller
             $user = User::where('role', 'admin')->get();
             return $this->responseWithSuccess($user, 'user fetched successfully', 200);
         } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function driverList()
+    {
+        try{
+            $user = User::where('role', 'driver')->get();
+            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+        }catch(\Exception $e){
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }

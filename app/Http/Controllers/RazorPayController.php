@@ -21,14 +21,15 @@ class RazorPayController extends Controller
             'area' => 'required|numeric|min:1'
         ]);
 
-        $service = Service::findOrFail($request->service_id);
+        $service = Service::with('equipment')->findOrFail($request->service_id);
+        $equipment = $service->equipment;
         $area = $request->area;
 
-        if ($service->min_area && $area < $service->min_area) {
-            return $this->responseWithError('Minimum area is ' . $service->min_area . ' kanals', 422);
+        if ($equipment->min_kanal && $area < $equipment->min_kanal) {
+            return $this->responseWithError('Minimum area in kanals is ' . $equipment->min_kanal . ' kanals', 422);
         }
 
-        $amount = $area * $service->price;
+        $amount = $area * $equipment->price_per_kanal;
 
         if (!$amount) {
             return $this->responseWithError('Invalid amount', 422);
@@ -84,18 +85,18 @@ class RazorPayController extends Controller
                 $start = $booking->start_time;
                 $end = $booking->end_time;
 
-                $conflict = Booking::where('slot_date', $booking->slot_date)
-                    ->where(function ($q) use ($start, $end) {
-                        $q->whereBetween('start_time', [$start, $end])
-                            ->orWhereBetween('end_time', [$start, $end]);
-                    })
-                    ->where('status', 'confirmed')
-                    ->where('id', '!=', $booking->id)
-                    ->exists();
+                // $conflict = Booking::where('slot_date', $booking->slot_date)
+                //     ->where(function ($q) use ($start, $end) {
+                //         $q->whereBetween('start_time', [$start, $end])
+                //             ->orWhereBetween('end_time', [$start, $end]);
+                //     })
+                //     ->where('status', 'confirmed')
+                //     ->where('id', '!=', $booking->id)
+                //     ->exists();
 
-                if ($conflict) {
-                    return $this->responseWithError('Slot just got booked. Please try another.', 409);
-                }
+                // if ($conflict) {
+                //     return $this->responseWithError('Slot just got booked. Please try another.', 409);
+                // }
 
                 $booking->update([
                     'status' => 'confirmed',
