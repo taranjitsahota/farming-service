@@ -12,9 +12,9 @@ class ServiceArea extends Model
 
     protected $table = 'serviceareas'; 
     
-    protected $fillable = ['service_id', 'area_id'];    
+    protected $fillable = ['service_id', 'area_id','is_enabled'];    
 
-    public function areas()
+    public function area()
     {
         return $this->belongsTo(Area::class);
     }

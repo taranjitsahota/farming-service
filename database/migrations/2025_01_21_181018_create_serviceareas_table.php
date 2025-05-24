@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('service_id'); // Service ID
             $table->unsignedBigInteger('area_id');
+            $table->boolean('is_enabled')->default(true);
             $table->softDeletes();
             $table->timestamps();
         

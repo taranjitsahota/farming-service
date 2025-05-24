@@ -28,7 +28,26 @@ class ServiceAreaController extends Controller
      */
     public function index()
     {
-        return $this->responseWithSuccess(ServiceArea::all(), 'Service areas fetched successfully', 200);
+        try {
+            $serviceAreas = ServiceArea::with('area.city', 'area.state', 'area.village', 'service')->get();
+
+            $formatted = $serviceAreas->map(function ($serviceArea) {
+                return [
+                    'id' => $serviceArea->id,
+                    'service' => $serviceArea->service?->category,
+                    'service_id' => $serviceArea->service_id,
+                    'area_id' => $serviceArea->area_id,
+                    'city' => $serviceArea->area?->city?->name,
+                    'state' => $serviceArea->area?->state?->name,
+                    'village' => $serviceArea->area?->village?->name,
+                    'is_enabled' => $serviceArea->is_enabled,
+                ];
+            });
+
+            return $this->responseWithSuccess($formatted, 'Service areas fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Failed to fetch service areas: ' . $e->getMessage(), 500);
+        }
     }
 
     /**
@@ -132,6 +151,7 @@ class ServiceAreaController extends Controller
             $validated = $request->validate([
                 'service_id' => 'sometimes|exists:services,id',
                 'area_id'    => 'sometimes|exists:areas,id',
+                'is_enabled' => 'sometimes|boolean',
             ]);
 
             // Update only provided values

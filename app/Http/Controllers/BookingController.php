@@ -7,20 +7,28 @@ use App\Models\BusinessTiming;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Traits\Subscriptions\IsSubscribed;
 
 class BookingController extends Controller
 {
+
+    use IsSubscribed;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $user = auth()->user();
-        $bookings = Booking::where('user_id', $user->id)
-            ->with(['service', 'user', 'crop', 'servicearea'])
-            ->get();
+        try {
+            $user = auth()->user();
+            $bookings = Booking::where('user_id', $user->id)
+                ->with(['service', 'user', 'crop', 'servicearea'])
+                ->get();
 
-        return $this->responseWithSuccess($bookings, 'Bookings fetched successfully', 200);
+            return $this->responseWithSuccess($bookings, 'Bookings fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
     }
 
     /**
@@ -51,10 +59,93 @@ class BookingController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id) {}
+
+    public function getAllBookings()
     {
-        //
+        try {
+            $bookings = Booking::with('service')->with('user')->with('crop')->with('service')->with('service.equipment')->with('servicearea')->get();
+            // dd($bookings);
+            $formatted = $bookings->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'user_id' => $booking->user_id,
+                    'user_name' => $booking->user->name,
+                    'contact_number' => $booking->user->contact_number,
+                    'address' => $booking->address,
+                    'equipment' => $booking->equipment,
+                    'crop_id' => $booking->crop_id,
+                    'crop_name' => $booking->crop->name,
+                    'service_id' => $booking->service_id,
+                    'equipment_name' => $booking->service->equipment->name,
+                    'servicearea_id' => $booking->servicearea_id,
+                    // 'servicearea_name' => $booking->servicearea->name,
+                    'date' => $booking->slot_date,
+                    'start_time' => $booking->start_time,
+                    'end_time' => $booking->end_time,
+                    'status' => $booking->status,
+                   'booking_status' => $booking->booking_status,
+                    'amount' => $booking->price,
+                    'duration' => $booking->duration,
+                    'area' => $booking->area,
+
+                    'created_at' => $booking->created_at->format('Y-m-d'),
+
+
+                ];
+            });
+
+
+            return $this->responseWithSuccess($formatted, 'Bookings fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
     }
+
+    public function getPendingBookings()
+    {
+        try{
+           $bookings = Booking::where('booking_status', 'pending')->with('service')->with('service.equipment')->with('user')->with('crop')->with('service')->with('servicearea')->get();
+
+           $formatted = $bookings->map(function ($booking) {
+               return [
+                   'id' => $booking->id,
+                   'user_id' => $booking->user_id,
+                   'user_name' => $booking->user->name,
+                    'contact_number' => $booking->user->contact_number,
+                    'pin_code' => $booking->user->userInfo->pin_code ?? '',
+                   'address' => $booking->address,
+                   'land_area' => $booking->land_area,
+                   'equipment' => $booking->equipment,
+                   'user_note' => $booking->user_note,
+                   'crop_id' => $booking->crop_id,
+                   'crop_name' => $booking->crop->name,
+                   'service_id' => $booking->service_id,
+                   'equipment_name' => $booking->service->equipment->name,
+                   'servicearea_id' => $booking->servicearea_id,
+                   'service_name' => $booking->service->category,
+                   'date' => $booking->slot_date,
+                   'start_time' => $booking->start_time,
+                   'end_time' => $booking->end_time,
+                   'status' => $booking->status,
+                   'booking_status' => $booking->booking_status,
+                   'amount' => $booking->price,
+                   'duration' => $booking->duration,
+                   'area' => $booking->area,
+
+                   'created_at' => $booking->created_at->format('Y-m-d'),
+
+
+               ];   
+           });
+           
+           return $this->responseWithSuccess($formatted, 'Bookings fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+
+        }
+    }
+
     public function getAvailableSlots(Request $request)
     {
         try {
@@ -199,12 +290,6 @@ class BookingController extends Controller
         }
     }
 
-
-
-
-
-
-
     public function getEstimatedPayment(Request $request)
     {
         $request->validate([
@@ -290,22 +375,52 @@ class BookingController extends Controller
             // }
 
             // Reserve slot with status 'pending'
+            // $booking = Booking::create([
+            //     'user_id' => $user->id,
+            //     'service_id' => $request->service_id,
+            //     'crop_id' => $request->crop_id,
+            //     'area_id' => $request->area_id,
+            //     'price' => $price,
+            //     'slot_date' => $request->slot_date,
+            //     'start_time' => $start,
+            //     'end_time' => $end,
+            //     'duration' => $duration,
+            //     'service_area_id' => $area,
+            //     'status' => 'pending',
+            //     'reserved_until' => now()->addMinutes(15)
+            // ]);
+
+            // return $this->responseWithSuccess(['booking_id' => $booking->id], 'Slot reserved. Proceed to payment.');
+
+            $subscribed = $this->isSubscribed($user, $request->service_id, $request->area);
+
+            $status = $subscribed ? 'confirmed' : 'pending';
+            $reservedUntil = $subscribed ? null : now()->addMinutes(15);
+
             $booking = Booking::create([
                 'user_id' => $user->id,
                 'service_id' => $request->service_id,
                 'crop_id' => $request->crop_id,
                 'area_id' => $request->area_id,
-                'price' => $price,
+                'land_area' =>  $area,
+                'price' => $subscribed ? 0 : $price, // No price if subscribed
                 'slot_date' => $request->slot_date,
                 'start_time' => $start,
                 'end_time' => $end,
                 'duration' => $duration,
                 'service_area_id' => $area,
-                'status' => 'pending',
-                'reserved_until' => now()->addMinutes(15)
+                'status' => $status,
+                'reserved_until' => $reservedUntil
             ]);
 
-            return $this->responseWithSuccess(['booking_id' => $booking->id], 'Slot reserved. Proceed to payment.');
+            $message = $subscribed
+                ? 'Slot booked using your subscription. No payment required.'
+                : 'Slot reserved. Proceed to payment.';
+
+            return $this->responseWithSuccess(['booking_id' => $booking->id], $message);
+
+
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {

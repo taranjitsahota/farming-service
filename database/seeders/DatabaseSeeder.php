@@ -26,5 +26,17 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('Password123'),
             'role' => 'superadmin',
         ]);
+        User::factory()->create([
+            'name' => 'Hardeep Sahota',
+            'email' => 'jaspal_hardeep@yahoo.com',
+            'password' => Hash::make('Password123'),
+            'role' => 'superadmin',
+        ]);
+        User::factory()->create([
+            'name' => 'Keshav Dwivedi',
+            'email' => 'keshavdwivedi75@gmail.com',
+            'password' => Hash::make('Password123'),
+            'role' => 'superadmin',
+        ]);
     }
 }

@@ -59,7 +59,7 @@ class CropController extends Controller
 
         try{
             $request->validate([
-                'name' => 'required',
+                // 'name' => 'required',
                 'is_enabled' => 'required',
             ]);
 

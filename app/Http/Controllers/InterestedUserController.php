@@ -13,24 +13,27 @@ class InterestedUserController extends Controller
      */
     public function index()
     {
-        try{
-        $users = InterestedUser::with(['user', 'state', 'city', 'village'])->get();
+        try {
+            $users = InterestedUser::with(['user', 'state', 'city', 'village'])->get();
 
-          $formatted = $users->map(function ($area) {
-            return [
-                'id'           => $area->user_id,
-                'village_id'   => $area->village_id,
-                'village_name' => $area->village?->name ?? null,
-                'city_id'      => $area->city_id,
-                'city_name'    => $area->city?->name ?? null,
-                'state_id'     => $area->state_id,
-                'state_name'   => $area->state?->name ?? null,
-            ];
-        });
+            $formatted = $users->map(function ($area) {
+                return [
+                    'id'           => $area->id,
+                    'user_id'      => $area->user_id,
+                    'name'         => $area->user->name,
+                    'contact'      => $area->user->contact,
+                    'village_id'   => $area->village_id,
+                    'village_name' => $area->village?->name ?? null,
+                    'city_id'      => $area->city_id,
+                    'city_name'    => $area->city?->name ?? null,
+                    'state_id'     => $area->state_id,
+                    'state_name'   => $area->state?->name ?? null,
+                    'requested_date'   => $area->created_at->format('Y-m-d')
+                ];
+            });
 
-        return $this->responseWithSuccess($formatted, 'Interested users retrieved successfully', 200);
-
-        }catch(\Exception $e){
+            return $this->responseWithSuccess($formatted, 'Interested users retrieved successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -41,7 +44,7 @@ class InterestedUserController extends Controller
     public function store(Request $request)
     {
 
-        try{
+        try {
             $request->validate([
                 'state_id'   => 'required|exists:states,id',
                 'city_id'    => 'required|exists:cities,id',
@@ -58,12 +61,9 @@ class InterestedUserController extends Controller
             ]);
 
             return $this->responseWithSuccess([], 'Interested user created successfully', 201);
-
-
-        }catch(ValidationException $e){
+        } catch (ValidationException $e) {
             return $this->responseWithError($e->getMessage(), 422);
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -73,7 +73,7 @@ class InterestedUserController extends Controller
      */
     public function show(InterestedUser $interestedUser)
     {
-        try{
+        try {
             $interestedUser = InterestedUser::with(['user', 'state', 'city', 'village'])->find($interestedUser->id);
 
             $formatted = [
@@ -87,8 +87,7 @@ class InterestedUserController extends Controller
             ];
 
             return $this->responseWithSuccess($formatted, 'Interested user retrieved successfully', 200);
-
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -98,7 +97,7 @@ class InterestedUserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        try{
+        try {
             $request->validate([
                 'state_id'   => 'required|exists:states,id',
                 'city_id'    => 'required|exists:cities,id',
@@ -110,13 +109,11 @@ class InterestedUserController extends Controller
             $interestedUser->city_id = $request->city_id;
             $interestedUser->village_id = $request->village_id;
             $interestedUser->save();
-        
-            return $this->responseWithSuccess([], 'Interested user updated successfully', 200);
 
-        }catch(ValidationException $e){
+            return $this->responseWithSuccess([], 'Interested user updated successfully', 200);
+        } catch (ValidationException $e) {
             return $this->responseWithError($e->getMessage(), 422);
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
@@ -126,12 +123,11 @@ class InterestedUserController extends Controller
      */
     public function destroy($id)
     {
-        try{
+        try {
             $interestedUser = InterestedUser::find($id);
             $interestedUser->delete();
             return $this->responseWithSuccess([], 'Interested user deleted successfully', 200);
-
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }

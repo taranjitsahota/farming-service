@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('service_id');
             $table->unsignedBigInteger('crop_id');
             $table->unsignedBigInteger('service_area_id');
+            $table->integer('driver_id')->nullable();
+            $table->integer('land_area');
             $table->date('slot_date');
             $table->time('start_time');
             $table->time('end_time');
@@ -24,13 +26,20 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
-            $table->text('user_note')->nullable();
+            $table->text('user_note')->nullable(); 
+            $table->text('admin_note')->nullable(); 
             $table->decimal('price', 10, 2);
             $table->string('payment_method')->nullable();
             $table->string('payment_id')->nullable();
             $table->datetime('reserved_until')->nullable();
             $table->datetime('paid_at')->nullable();
-            $table->enum('status', ['pending', 'confirmed','cancelled'])->default('pending');
+             $table->timestamp('cancelled_at')->nullable();
+            $table->string('cancel_reason')->nullable();
+            $table->decimal('refund_amount', 10, 2)->nullable();
+            $table->string('refund_status')->nullable();
+            $table->enum('payment_status', ['pending', 'confirmed','cancelled'])->default('pending');
+            $table->enum('booking_status', ['pending', 'completed','cancelled'])->default('pending');
+            $table->softDeletes();
             $table->timestamps();
         
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

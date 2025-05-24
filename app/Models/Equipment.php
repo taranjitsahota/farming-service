@@ -15,6 +15,7 @@ class Equipment extends Model
         'image',
         'price_per_kanal',
         'min_kanal',
+        'image',
         'minutes_per_kanal',
         'inventory',
         'is_enabled',

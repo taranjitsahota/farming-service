@@ -130,7 +130,7 @@ class ServiceController extends Controller
             $validated = $request->validate([
                 'equipment_id' => 'required|exists:equipments,id',
                 'category' => 'required|string|max:255',
-                'is_enabled'    => 'boolean'
+                'is_enabled'    => 'required|boolean'
             ]);
 
             $service->update($validated);

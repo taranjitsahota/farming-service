@@ -14,7 +14,7 @@ class BusinessTimingController extends Controller
     {
         try {
             $timing = BusinessTiming::all();
-            return $this->responseWithSuccess($timing, 'timing fetched successfully', 200);
+            return $this->responseWithSuccess($timing, ' Business timing fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subscriptionplans', function (Blueprint $table) {
+        Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->decimal('price', 8, 2);
-            $table->string('duration');
-            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('equipment_id');
+            $table->string('category');
+            $table->boolean('is_enabled')->default(true);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->foreign('equipment_id')->references('id')->on('equipments')->onDelete('cascade');
         });
     }
 
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('subscriptionplans');
+        Schema::dropIfExists('services');
     }
 };
