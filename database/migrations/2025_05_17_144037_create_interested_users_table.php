@@ -13,10 +13,19 @@ return new class extends Migration
     {
         Schema::create('interested_users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-              $table->unsignedBigInteger('city_id');
-            $table->unsignedBigInteger('state_id');
-            $table->unsignedBigInteger('village_id');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+              $table->unsignedBigInteger('city_id')->nullable();
+            $table->unsignedBigInteger('state_id')->nullable();
+            $table->unsignedBigInteger('village_id')->nullable();
+            $table->string('name');
+            $table->string('email');
+            $table->string('contact_number');
+            $table->string('village_name');
+            $table->string('pincode');
+            $table->string('district');
+            $table->string('area_of_land');
+            $table->string('land_unit');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade');

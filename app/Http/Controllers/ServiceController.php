@@ -10,9 +10,24 @@ class ServiceController extends Controller
 {
 
     public function index(){
-        $services = Service::all();
+        try{
+            $services = Service::with('equipment')->get();
 
-        return $this->responseWithSuccess($services, 'Services fetched successfully', 200);
+            $formatted = $services->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'equipment_name' => $service->equipment->name,
+                    'equipment_id' => $service->equipment_id,
+                    'category' => $service->category,
+                    'is_enabled' => $service->is_enabled
+                ];
+            });
+
+            return $this->responseWithSuccess($formatted, 'Services fetched successfully', 200);
+
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
     }
     /**
      * Store a newly created service in storage.
@@ -128,12 +143,12 @@ class ServiceController extends Controller
             $service = Service::findOrFail($id);
 
             $validated = $request->validate([
-                'equipment_id' => 'required|exists:equipments,id',
-                'category' => 'required|string|max:255',
+                // 'equipment_id' => 'required|exists:equipments,id',
+                // 'category' => 'required|string|max:255',
                 'is_enabled'    => 'required|boolean'
             ]);
 
-            $service->update($validated);
+            $service->update($request->all());
 
             return $this->responseWithSuccess($service, 'Service updated successfully', 200);
 
@@ -178,6 +193,15 @@ class ServiceController extends Controller
         }
     }
 
-   
+   public function ServiceByEquipmentId($equipmentId)
+    {
+        try {
+            $services = Service::where('equipment_id', $equipmentId)->get();
+
+            return $this->responseWithSuccess($services, 'Services fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
 
 }

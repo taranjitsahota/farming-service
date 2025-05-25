@@ -29,11 +29,13 @@ class ServiceAreaController extends Controller
     public function index()
     {
         try {
-            $serviceAreas = ServiceArea::with('area.city', 'area.state', 'area.village', 'service')->get();
+            $serviceAreas = ServiceArea::with('area.city', 'area.state', 'area.village', 'service', 'service.equipment')->get();
 
             $formatted = $serviceAreas->map(function ($serviceArea) {
                 return [
                     'id' => $serviceArea->id,
+                    'equipment' => $serviceArea->service?->equipment->name,
+                    'equipment_id' => $serviceArea->service?->equipment_id,
                     'service' => $serviceArea->service?->category,
                     'service_id' => $serviceArea->service_id,
                     'area_id' => $serviceArea->area_id,
@@ -74,14 +76,28 @@ class ServiceAreaController extends Controller
         try {
             // Validate request
             $validated = $request->validate([
+                'equipment_id' => 'required|exists:equipments,id',
                 'service_id' => 'required|exists:services,id',
                 'area_id'    => 'required|exists:areas,id',
             ]);
 
-            // Create the service area entry
-            $serviceArea = ServiceArea::create($validated);
+            $validService = \App\Models\Service::where('id', $request->service_id)
+                ->where('equipment_id', $request->equipment_id)
+                ->first();
 
-            return $this->responseWithSuccess($serviceArea, 'Service area created successfully', 201);
+            if (!$validService) {
+                return response()->json([
+                    'message' => 'Invalid Equipment + Service combination.'
+                ], 422);
+            }
+
+            // Create the service area entry
+            ServiceArea::create([
+                'service_id' => $request->service_id,
+                'area_id' => $request->area_id,
+            ]);
+
+            return $this->responseWithSuccess([], 'Service area created successfully', 201);
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {

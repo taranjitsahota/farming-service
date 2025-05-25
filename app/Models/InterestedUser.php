@@ -9,11 +9,20 @@ class InterestedUser extends Model
 {
     use HasFactory;
 
-      protected $fillable = [
+    protected $fillable = [
         'user_id',
         'state_id',
         'village_id',
         'city_id',
+        'name',
+        'email',
+        'contact_number',
+        'village_name',
+        'pincode',
+        'district',
+        'area_of_land',
+        'land_unit',
+        'type'
     ];
 
     public function user()
@@ -21,7 +30,7 @@ class InterestedUser extends Model
         return $this->belongsTo(User::class);
     }
 
-      public function city()
+    public function city()
     {
         return $this->belongsTo(City::class);
     }

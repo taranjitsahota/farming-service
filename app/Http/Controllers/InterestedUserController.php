@@ -14,7 +14,7 @@ class InterestedUserController extends Controller
     public function index()
     {
         try {
-            $users = InterestedUser::with(['user', 'state', 'city', 'village'])->get();
+            $users = InterestedUser::with(['user', 'state', 'city', 'village'])->where('type', 'app')->get();
 
             $formatted = $users->map(function ($area) {
                 return [
@@ -57,7 +57,8 @@ class InterestedUserController extends Controller
                 'user_id' => $user->id,
                 'state_id' => $request->state_id,
                 'city_id' => $request->city_id,
-                'village_id' => $request->village_id
+                'village_id' => $request->village_id,
+                'type' => 'app'
             ]);
 
             return $this->responseWithSuccess([], 'Interested user created successfully', 201);
@@ -128,6 +129,30 @@ class InterestedUserController extends Controller
             $interestedUser->delete();
             return $this->responseWithSuccess([], 'Interested user deleted successfully', 200);
         } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+    public function interestedUsersEmail(){
+        try{
+            $interestedUsers = InterestedUser::where('type', 'email')->get();
+
+            $formatted = $interestedUsers->map(function ($area) {
+                return [
+                    'id'           => $area->id,
+                    'name'         => $area->name,
+                    'contact'      => $area->contact_number,
+                    'email'        => $area->email,
+                    'village_name' => $area->village_name,
+                    'pincode'      => $area->pincode,
+                    'district'     => $area->district,
+                    'area_of_land' => $area->area_of_land,
+                    'land_unit'    => $area->land_unit,
+                    'requested_date'   => $area->created_at->format('Y-m-d')
+                ];
+            });
+
+            return $this->responseWithSuccess($formatted, 'Interested users retrieved successfully', 200);
+        }catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
