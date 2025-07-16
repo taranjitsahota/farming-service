@@ -11,13 +11,15 @@ class ServiceController extends Controller
 
     public function index(){
         try{
-            $services = Service::with('equipment')->get();
+            $services = Service::with('equipment', 'substation')->get();
 
             $formatted = $services->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'equipment_name' => $service->equipment->name,
-                    'equipment_id' => $service->equipment_id,
+                    'equipment_id' => $service->equipment_id ?? null,
+                    'substation_name' => $service->substation->name ?? null,
+                    'substation_id' => $service->substation_id,
                     'category' => $service->category,
                     'is_enabled' => $service->is_enabled
                 ];
@@ -58,6 +60,7 @@ class ServiceController extends Controller
         try {
             $validated = $request->validate([
                 'equipment_id' => 'required|exists:equipments,id',
+                'substation_id' => 'required|exists:substations,id',
                 'category' => 'required|string|max:255',
                 'is_enabled'    => 'boolean'
             ]);

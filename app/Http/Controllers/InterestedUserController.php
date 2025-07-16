@@ -14,7 +14,7 @@ class InterestedUserController extends Controller
     public function index()
     {
         try {
-            $users = InterestedUser::with(['user', 'state', 'city', 'village'])->where('type', 'app')->get();
+            $users = InterestedUser::with(['user', 'state', 'tehsil', 'district', 'village'])->where('type', 'app')->get();
 
             $formatted = $users->map(function ($area) {
                 return [
@@ -24,8 +24,10 @@ class InterestedUserController extends Controller
                     'contact'      => $area->user->contact,
                     'village_id'   => $area->village_id,
                     'village_name' => $area->village?->name ?? null,
-                    'city_id'      => $area->city_id,
-                    'city_name'    => $area->city?->name ?? null,
+                    'tehsil_id'      => $area->tehsil_id,
+                    'tehsil_name'    => $area->tehsil?->name ?? null,
+                    'district_id'    => $area->district_id,
+                    'district_name'  => $area->district?->name ?? null,
                     'state_id'     => $area->state_id,
                     'state_name'   => $area->state?->name ?? null,
                     'requested_date'   => $area->created_at->format('Y-m-d')
@@ -47,7 +49,8 @@ class InterestedUserController extends Controller
         try {
             $request->validate([
                 'state_id'   => 'required|exists:states,id',
-                'city_id'    => 'required|exists:cities,id',
+                'tehsil_id'    => 'required|exists:tehsils,id',
+                'district_id' => 'required|exists:districts,id',
                 'village_id' => 'required|exists:villages,id',
             ]);
 
@@ -56,7 +59,7 @@ class InterestedUserController extends Controller
             InterestedUser::create([
                 'user_id' => $user->id,
                 'state_id' => $request->state_id,
-                'city_id' => $request->city_id,
+                'district_id' => $request->district_id,
                 'village_id' => $request->village_id,
                 'type' => 'app'
             ]);
@@ -75,14 +78,16 @@ class InterestedUserController extends Controller
     public function show(InterestedUser $interestedUser)
     {
         try {
-            $interestedUser = InterestedUser::with(['user', 'state', 'city', 'village'])->find($interestedUser->id);
+            $interestedUser = InterestedUser::with(['user', 'state', 'district', 'tehsil', 'village'])->find($interestedUser->id);
 
             $formatted = [
                 'id'           => $interestedUser->user_id,
                 'village_id'   => $interestedUser->village_id,
                 'village_name' => $interestedUser->village?->name ?? null,
-                'city_id'      => $interestedUser->city_id,
-                'city_name'    => $interestedUser->city?->name ?? null,
+                'tehsil_id'      => $interestedUser->tehsil_id,
+                'tehsil_name'    => $interestedUser->tehsil?->name ?? null,
+                'district_id'    => $interestedUser->district_id,
+                'district_name'  => $interestedUser->district?->name ?? null,
                 'state_id'     => $interestedUser->state_id,
                 'state_name'   => $interestedUser->state?->name ?? null,
             ];
@@ -101,13 +106,15 @@ class InterestedUserController extends Controller
         try {
             $request->validate([
                 'state_id'   => 'required|exists:states,id',
-                'city_id'    => 'required|exists:cities,id',
+                'tehsil_id'    => 'required|exists:tehsils,id',
+                'district_id' => 'required|exists:districts,id',
                 'village_id' => 'required|exists:villages,id',
             ]);
 
             $interestedUser = InterestedUser::find($id);
             $interestedUser->state_id = $request->state_id;
-            $interestedUser->city_id = $request->city_id;
+            $interestedUser->tehsil_id = $request->tehsil_id;
+            $interestedUser->district_id = $request->district_id;
             $interestedUser->village_id = $request->village_id;
             $interestedUser->save();
 

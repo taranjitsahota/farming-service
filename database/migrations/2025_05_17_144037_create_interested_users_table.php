@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('interested_users', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-              $table->unsignedBigInteger('city_id')->nullable();
+            $table->unsignedBigInteger('tehsil_id')->nullable();
+            $table->unsignedBigInteger('district_id')->nullable();
             $table->unsignedBigInteger('state_id')->nullable();
             $table->unsignedBigInteger('village_id')->nullable();
             $table->string('name');
@@ -25,10 +26,12 @@ return new class extends Migration
             $table->string('district');
             $table->string('area_of_land');
             $table->string('land_unit');
+            $table->string('type');
             $table->softDeletes();
             $table->timestamps();
 
-            $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade');
+            $table->foreign('tehsil_id')->references('id')->on('tehsils')->onDelete('cascade');
+            $table->foreign('district_id')->references('id')->on('districts')->onDelete('cascade');
             $table->foreign('state_id')->references('id')->on('states')->onDelete('cascade');
             $table->foreign('village_id')->references('id')->on('villages')->onDelete('cascade');
         });

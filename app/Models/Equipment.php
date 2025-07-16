@@ -12,6 +12,7 @@ class Equipment extends Model
     protected $table = 'equipments';
     protected $fillable = [
         'name',
+        'substation_id',
         'image',
         'price_per_kanal',
         'min_kanal',
@@ -23,5 +24,9 @@ class Equipment extends Model
     public function services()
     {
         return $this->hasMany(Service::class);
+    }
+    public function substation()
+    {
+        return $this->belongsTo(Substation::class);
     }
 }

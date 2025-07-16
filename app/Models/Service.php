@@ -9,10 +9,15 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category', 'equipment_id', 'is_enabled'];
+    protected $fillable = ['name', 'category' , 'substation_id' , 'equipment_id', 'is_enabled'];
 
     public function equipment()
     {
         return $this->belongsTo(Equipment::class);
+    }
+    
+     public function substation()
+    {
+        return $this->belongsTo(Substation::class);
     }
 }

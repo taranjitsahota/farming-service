@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Dom\Text;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -9,10 +10,10 @@ class Village extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'city_id'];
+    protected $fillable = ['name', 'tehsil_id'];
 
-    public function city()
+    public function tehsil()
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(Tehsil::class);
     }
 }

@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\City;
 use App\Models\Country;
+use App\Models\District;
 use App\Models\State;
+use App\Models\Tehsil;
 use App\Models\Village;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,77 +22,65 @@ class VillagesImportSeeder extends Seeder
 
         $country = Country::firstOrCreate(['name' => 'India', 'countryCode' => 'IN']);
 
+        // Caches to avoid duplicates and improve lookup speed
         $stateCache = State::where('country_id', $country->id)->pluck('id', 'name')->toArray();
-        $cityCache = [];
-        $uniqueCities = [];
+        $districtCache = [];
+        $tehsilCache = [];
         $villageData = [];
 
-        // First pass: gather states and collect unique cities
         foreach ($data as $stateData) {
-            // Create state if not in cache
-            if (!isset($stateCache[$stateData['state']])) {
+            // Insert state
+            $stateName = $stateData['state'];
+            if (!isset($stateCache[$stateName])) {
                 $state = State::create([
-                    'name' => $stateData['state'],
+                    'name' => $stateName,
                     'country_id' => $country->id,
                 ]);
-                $stateCache[$stateData['state']] = $state->id;
+                $stateCache[$stateName] = $state->id;
             }
-
-            $stateId = $stateCache[$stateData['state']];
+            $stateId = $stateCache[$stateName];
 
             foreach ($stateData['districts'] as $districtData) {
+                $districtName = $districtData['district'];
+                $districtKey = "$stateId-$districtName";
+
+                // Insert district
+                if (!isset($districtCache[$districtKey])) {
+                    $district = District::create([
+                        'name' => $districtName,
+                        'state_id' => $stateId,
+                    ]);
+                    $districtCache[$districtKey] = $district->id;
+                }
+                $districtId = $districtCache[$districtKey];
+
                 foreach ($districtData['subDistricts'] as $subDistrictData) {
-                    $cityName = $subDistrictData['subDistrict'];
-                    if (!isset($uniqueCities[$cityName])) {
-                        $uniqueCities[$cityName] = [
-                            'name' => $cityName,
-                            'state_id' => $stateId,
+                    $tehsilName = $subDistrictData['subDistrict'];
+                    $tehsilKey = "$districtId-$tehsilName";
+
+                    // Insert tehsil
+                    if (!isset($tehsilCache[$tehsilKey])) {
+                        $tehsil = Tehsil::create([
+                            'name' => $tehsilName,
+                            'district_id' => $districtId,
+                        ]);
+                        $tehsilCache[$tehsilKey] = $tehsil->id;
+                    }
+                    $tehsilId = $tehsilCache[$tehsilKey];
+
+                    // Prepare village entries
+                    foreach ($subDistrictData['villages'] as $villageName) {
+                        $villageData[] = [
+                            'name' => $villageName,
+                            'tehsil_id' => $tehsilId,
                         ];
                     }
                 }
             }
         }
 
-        // Fetch existing cities
-        $existingCities = City::whereIn('name', array_keys($uniqueCities))->pluck('id', 'name')->toArray();
-
-        // Remove already existing cities
-        $citiesToInsert = array_filter($uniqueCities, function ($city) use ($existingCities) {
-            return !isset($existingCities[$city['name']]);
-        });
-
-        // Bulk insert new cities
-        if (!empty($citiesToInsert)) {
-            City::insert(array_values($citiesToInsert));
-        }
-
-        // Get all cities again after insert
-        $cityCache = City::whereIn('name', array_keys($uniqueCities))->pluck('id', 'name')->toArray();
-
-        // Second pass: prepare village data
-        foreach ($data as $stateData) {
-            $stateId = $stateCache[$stateData['state']];
-
-            foreach ($stateData['districts'] as $districtData) {
-                foreach ($districtData['subDistricts'] as $subDistrictData) {
-                    $cityName = $subDistrictData['subDistrict'];
-                    $cityId = $cityCache[$cityName] ?? null;
-
-                    if ($cityId) {
-                        foreach ($subDistrictData['villages'] as $villageName) {
-                            $villageData[] = [
-                                'name' => $villageName,
-                                'city_id' => $cityId,
-                            ];
-                        }
-                    }
-                }
-            }
-        }
-
         // Insert villages in chunks
-        $chunkSize = 500;
-        foreach (array_chunk($villageData, $chunkSize) as $chunk) {
+        foreach (array_chunk($villageData, 500) as $chunk) {
             Village::insert($chunk);
         }
     }

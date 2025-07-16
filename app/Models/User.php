@@ -29,9 +29,10 @@ class User extends Authenticatable
         'profile_completed',
         'profile_photo_url',
         'profile_photo_path',
+        'substation_id',
     ];
 
- 
+
 
     public function userInfo()
     {
@@ -64,4 +65,8 @@ class User extends Authenticatable
         return $this->country_code . $this->contact_number;
     }
 
+    public function substation()
+    {
+        return $this->belongsTo(Substation::class);
+    }
 }

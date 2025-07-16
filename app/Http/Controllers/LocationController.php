@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Area;
+use App\Models\District;
 use Illuminate\Http\Request;
 use App\Models\State;
-use App\Models\City;
+use App\Models\Tehsil;
 use App\Models\ServiceArea;
 use App\Models\Village;
 
@@ -19,13 +20,18 @@ class LocationController extends Controller
         return $this->responseWithSuccess($data, 'States fetched successfully', 200);
     }
 
-    public function getCities($state_id)
+    public function getDistricts($state_id)
     {
-        $data = City::select('id', 'name')->where('state_id', $state_id)->get();
+        $data = District::select('id', 'name')->where('state_id', $state_id)->get();
+        return $this->responseWithSuccess($data, 'Cities fetched successfully', 200);
+    }
+    public function getTehsils($district_id)
+    {
+        $data = Tehsil::select('id', 'name')->where('district_id', $district_id)->get();
         return $this->responseWithSuccess($data, 'Cities fetched successfully', 200);
     }
 
-    public function getServicableVillages($city_id)
+    public function getServicableVillages($tehsil_id)
     {
         try{
         $serviceableVillageIds = Area::whereIn(
@@ -33,9 +39,9 @@ class LocationController extends Controller
             ServiceArea::pluck('area_id')
         )->pluck('village_id')->unique()->toArray();
 
-        // Get villages in the city
+        // Get villages in the Tehsil
         $data = Village::select('id', 'name')
-            ->where('city_id', $city_id)
+            ->where('tehsil_id', $tehsil_id)
             ->get()
             ->map(function ($village) use ($serviceableVillageIds) {
                 $village->is_serviceable = in_array($village->id, $serviceableVillageIds);
@@ -48,9 +54,9 @@ class LocationController extends Controller
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-    public function getVillages($city_id){
+    public function getVillages($tehsil_id){
         try{
-        $data = Village::select('id', 'name')->where('city_id', $city_id)->get();
+        $data = Village::select('id', 'name')->where('tehsil_id', $tehsil_id)->get();
         return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
         }catch(\Exception $e){
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());

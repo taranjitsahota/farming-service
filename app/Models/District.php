@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class City extends Model
+class District extends Model
 {
     use HasFactory;
 
@@ -16,9 +16,9 @@ class City extends Model
         return $this->belongsTo(State::class);
     }
 
-    public function villages()
+    public function tehsils()
     {
-        return $this->hasMany(Village::class);
+        return $this->hasMany(Tehsil::class);
     }
 
 }

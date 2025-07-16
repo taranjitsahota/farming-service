@@ -15,8 +15,25 @@ class EquipmentController extends Controller
     public function index()
     {
         try{
-            $equipment = Equipment::all();
-            return $this->responseWithSuccess($equipment, 'equipment fetched successfully', 200);
+            $equipment = Equipment::with('substation')->get();
+            $formatter = $equipment->map(function ($equipment) {
+                return [
+                    'id' => $equipment->id,
+                    'name' => $equipment->name,
+                    'substation_name' => $equipment->substation->name,
+                    'substation_id' => $equipment->substation->id,
+                    'is_enabled' => $equipment->is_enabled,
+                    'image' => $equipment->image,
+                    'price_per_kanal' => $equipment->price_per_kanal,
+                    'min_kanal' => $equipment->min_kanal,
+                    'minutes_per_kanal' => $equipment->minutes_per_kanal,
+                    'inventory' => $equipment->inventory
+
+
+                ];
+            });
+
+            return $this->responseWithSuccess($formatter, 'equipment fetched successfully', 200);
         }catch(\Exception $e){
             return $this->responseWithError($e->getMessage(), 'equipment not found', 404);
         }
@@ -29,6 +46,7 @@ class EquipmentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'substation_id' => 'required|exists:substations,id',
             'price_per_kanal' => 'required|numeric',
             'min_kanal' => 'required|integer',
             'is_enabled' => 'required|boolean',
@@ -50,6 +68,7 @@ class EquipmentController extends Controller
 
             $equipment = Equipment::create([
                 'name' => $request->name,
+                'substation_id' => $request->substation_id,
                 'price_per_kanal' => $request->price_per_kanal,
                 'min_kanal' => $request->min_kanal,
                 'is_enabled' => $request->is_enabled,
@@ -87,6 +106,7 @@ class EquipmentController extends Controller
             // 'name' => 'required|string|max:255',
             // 'price_per_kanal' => 'required|numeric',
             // 'min_kanal' => 'required|integer',
+            // 'substation_id' => 'required|exists:substations,id',
             'is_enabled' => 'required',
             // 'minutes_per_kanal' => 'required|integer',
             // 'inventory' => 'required|integer',

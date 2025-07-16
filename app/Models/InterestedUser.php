@@ -13,7 +13,8 @@ class InterestedUser extends Model
         'user_id',
         'state_id',
         'village_id',
-        'city_id',
+        'tehsil_id',
+        'district_id',
         'name',
         'email',
         'contact_number',
@@ -30,9 +31,14 @@ class InterestedUser extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function city()
+    public function tehsil()
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(Tehsil::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
     }
 
     public function state()

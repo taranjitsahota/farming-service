@@ -107,8 +107,19 @@ class UserController extends Controller
     public function adminList()
     {
         try {
-            $user = User::where('role', 'admin')->get();
-            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+            $user = User::where('role', 'admin')->with('substation')->get();
+            $formatter = $user->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'contact_number' => $user->contact_number,
+                    'role' => $user->role,
+                    'substation' => $user->substation ? $user->substation->name : null,
+                    'substation_id' => $user->substation ? $user->substation->id : null
+                ];
+            });
+            return $this->responseWithSuccess($formatter, 'user fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

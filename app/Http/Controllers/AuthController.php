@@ -67,6 +67,7 @@ class AuthController extends Controller
                 // 'contact_number' => 'required|unique:users,contact_number|max:15',
                 'contact_number' => 'required|max:15',
                 'role' => 'required|string|max:12',
+                'substation_id' => 'required_if:role,admin|exists:substations,id',
             ]);
 
             $user = $this->register($request, $request->role);

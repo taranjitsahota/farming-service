@@ -12,7 +12,7 @@ class AreaController extends Controller
      * Display a listing of the resource.
      */
 
-      /**
+    /**
      * @OA\Get(
      *     path="/api/areas",
      *     summary="Get all areas",
@@ -25,22 +25,26 @@ class AreaController extends Controller
     public function index()
     {
         try {
-              $areas = Area::with(['city', 'state', 'village'])->get();
+            $areas = Area::with(['state', 'district', 'tehsil', 'village','substation'])->get();
 
-        // Flatten the data
-        $formatted = $areas->map(function ($area) {
-            return [
-                'id'           => $area->id,
-                'village_id'   => $area->village_id,
-                'village_name' => $area->village?->name ?? null,
-                'city_id'      => $area->city_id,
-                'city_name'    => $area->city?->name ?? null,
-                'state_id'     => $area->state_id,
-                'state_name'   => $area->state?->name ?? null,
-                'pincode'      => $area->pincode,
-                'is_enabled'   => $area->is_enabled,
-            ];
-        });
+            // Flatten the data
+            $formatted = $areas->map(function ($area) {
+                return [
+                    'id'           => $area->id,
+                    'village_id'   => $area->village_id,
+                    'village_name' => $area->village?->name ?? null,
+                    'tehsil_id'      => $area->tehsil_id,
+                    'tehsil_name'    => $area->tehsil?->name ?? null,
+                    'district_id'    => $area->district_id,
+                    'district_name'  => $area->district?->name ?? null,
+                    'state_id'     => $area->state_id,
+                    'state_name'   => $area->state?->name ?? null,
+                    'substation_id' => $area->substation_id ?? null,
+                    'substation_name' => $area->substation?->name ?? null,
+                    'pincode'      => $area->pincode,
+                    'is_enabled'   => $area->is_enabled,
+                ];
+            });
 
             return $this->responseWithSuccess($formatted, 'Areas retrieved successfully', 200);
         } catch (\Exception $e) {
@@ -48,22 +52,23 @@ class AreaController extends Controller
         }
     }
 
-    
-    
-   /**
+
+
+    /**
      * Store a newly created area in storage.
      * 
      * @OA\Post(
      *     path="/api/areas",
      *     summary="Add a new area",
-     *     description="Create a new area with city, state, village, pincode, and enabled status.",
+     *     description="Create a new area with tehsil,district, state, village, pincode, and enabled status.",
      *     tags={"Areas"},
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"city_id", "state_id", "pincode"},
-     *             @OA\Property(property="city_id", type="integer", example=1),
+     *             required={"tehsil_id", "state_id", "pincode"},
+     *             @OA\Property(property="tehsil_id", type="integer", example=1),
+     *             @OA\Property(property="district_id", type="integer", example=1),
      *             @OA\Property(property="state_id", type="integer", example=2),
      *             @OA\Property(property="village", type="string", example="Greenfield"),
      *             @OA\Property(property="pincode", type="string", example="123456"),
@@ -79,26 +84,27 @@ class AreaController extends Controller
     {
         try {
             $validated = $request->validate([
-                'city_id'   => 'required|exists:cities,id',
+                'tehsil_id'   => 'required|exists:tehsils,id',
+                'district_id'   => 'required|exists:districts,id',
                 'state_id'  => 'required|exists:states,id',
                 'village_id'   => 'required|exists:villages,id',
+                'substation_id'   => 'nullable|exists:substations,id',
                 'pincode'   => 'nullable|string|max:10',
-                'is_enabled'=> 'boolean'
+                'is_enabled' => 'boolean'
             ]);
-    
+
             $area = Area::create($validated);
-    
+
             return $this->responseWithSuccess($area, 'Area created successfully', 201);
-    
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-           return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
 
-   /**
+    /**
      * @OA\Get(
      *     path="/api/areas/{id}",
      *     summary="Get a specific area",
@@ -121,7 +127,6 @@ class AreaController extends Controller
         try {
             $area = Area::findOrFail($id);
             return $this->responseWithSuccess($area, 'Area fetched successfully', 200);
-
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -157,17 +162,17 @@ class AreaController extends Controller
         try {
 
             $validated = $request->validate([
-                'city_id'   => 'sometimes|exists:cities,id',
+                'tehsil_id'   => 'sometimes|exists:tehsils,id',
                 'state_id'  => 'sometimes|exists:states,id',
                 'village_id'   => 'sometimes|exists:villages,id',
+                'substation_id'   => 'sometimes|exists:substations,id',
                 'pincode'   => 'nullable|string|max:10',
-                'is_enabled'=> 'sometimes'
+                'is_enabled' => 'sometimes'
             ]);
 
-        $area = Area::findOrFail($id);
-        $area->update($request->all());
-        return $this->responseWithSuccess($area, 'Area updated successfully', 200);
-
+            $area = Area::findOrFail($id);
+            $area->update($request->all());
+            return $this->responseWithSuccess($area, 'Area updated successfully', 200);
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
@@ -195,11 +200,10 @@ class AreaController extends Controller
     public function destroy($id)
     {
         try {
-        $area = Area::findOrFail($id);
-        $area->delete();
-        return $this->responseWithSuccess([], 'Area deleted successfully', 200);
-
-        }catch (\Exception $e) {
+            $area = Area::findOrFail($id);
+            $area->delete();
+            return $this->responseWithSuccess([], 'Area deleted successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }

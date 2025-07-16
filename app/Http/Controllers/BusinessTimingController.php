@@ -62,8 +62,8 @@ class BusinessTimingController extends Controller
         try {
             $request->validate([
                 'day' => 'required',
-                'start_time' => 'required',
-                'end_time' => 'required'
+                // 'start_time' => 'required',
+                // 'end_time' => 'required'
             ]);
 
             $timing = BusinessTiming::find($id);

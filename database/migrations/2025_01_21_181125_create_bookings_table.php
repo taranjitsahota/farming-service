@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('substation_id')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->foreignId('service_id');
             $table->unsignedBigInteger('crop_id');
@@ -33,7 +34,7 @@ return new class extends Migration
             $table->string('payment_id')->nullable();
             $table->datetime('reserved_until')->nullable();
             $table->datetime('paid_at')->nullable();
-             $table->timestamp('cancelled_at')->nullable();
+            $table->timestamp('cancelled_at')->nullable();
             $table->string('cancel_reason')->nullable();
             $table->decimal('refund_amount', 10, 2)->nullable();
             $table->string('refund_status')->nullable();
@@ -41,7 +42,8 @@ return new class extends Migration
             $table->enum('booking_status', ['pending', 'completed','cancelled'])->default('pending');
             $table->softDeletes();
             $table->timestamps();
-        
+            
+            $table->foreign('substation_id')->references('id')->on('substations')->onDelete('set null');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('crop_id')->references('id')->on('crops')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');

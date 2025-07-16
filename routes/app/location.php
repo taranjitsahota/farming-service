@@ -10,7 +10,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('location')->controller(LocationController::class)->group(function () {
             Route::get('/states', 'getStates');
             Route::get('/cities/{state_id}', 'getCities');
-            Route::get('/villages/{city_id}', 'getServicableVillages');
+            Route::get('/tehsils/{district_id}', 'getTehsils');
+            Route::get('/villages/{tehsil_id}', 'getServicableVillages');
         });
     });
 });

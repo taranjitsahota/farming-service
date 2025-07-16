@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use App\Models\ServiceArea;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class ServiceAreaController extends Controller
     public function index()
     {
         try {
-            $serviceAreas = ServiceArea::with('area.city', 'area.state', 'area.village', 'service', 'service.equipment')->get();
+            $serviceAreas = ServiceArea::with('area.tehsil','area.district', 'area.state', 'area.village', 'service', 'service.equipment', 'substation')->get();
 
             $formatted = $serviceAreas->map(function ($serviceArea) {
                 return [
@@ -39,9 +40,12 @@ class ServiceAreaController extends Controller
                     'service' => $serviceArea->service?->category,
                     'service_id' => $serviceArea->service_id,
                     'area_id' => $serviceArea->area_id,
-                    'city' => $serviceArea->area?->city?->name,
+                    'tehsil' => $serviceArea->area?->tehsil?->name,
+                    'district' => $serviceArea->area?->tehsil?->district?->name,
                     'state' => $serviceArea->area?->state?->name,
                     'village' => $serviceArea->area?->village?->name,
+                    'substation' => $serviceArea->substation?->name,
+                    'substation_id' => $serviceArea->substation_id,
                     'is_enabled' => $serviceArea->is_enabled,
                 ];
             });
@@ -79,9 +83,10 @@ class ServiceAreaController extends Controller
                 'equipment_id' => 'required|exists:equipments,id',
                 'service_id' => 'required|exists:services,id',
                 'area_id'    => 'required|exists:areas,id',
+                'substation_id' => 'required|exists:substations,id'
             ]);
 
-            $validService = \App\Models\Service::where('id', $request->service_id)
+            $validService = Service::where('id', $request->service_id)
                 ->where('equipment_id', $request->equipment_id)
                 ->first();
 
@@ -95,6 +100,7 @@ class ServiceAreaController extends Controller
             ServiceArea::create([
                 'service_id' => $request->service_id,
                 'area_id' => $request->area_id,
+                'substation_id' => $request->substation_id
             ]);
 
             return $this->responseWithSuccess([], 'Service area created successfully', 201);
@@ -166,6 +172,7 @@ class ServiceAreaController extends Controller
             // Validate the request (only validate fields that are provided)
             $validated = $request->validate([
                 'service_id' => 'sometimes|exists:services,id',
+                'substation_id' => 'sometimes|exists:substations,id',
                 'area_id'    => 'sometimes|exists:areas,id',
                 'is_enabled' => 'sometimes|boolean',
             ]);

@@ -109,7 +109,7 @@ class RazorPayController extends Controller
                 $user = User::find($user);
 
                 // Notification::send($booking->user, new BookingPaid($booking));
-                Mail::to($user->email)->send(new BookingConfirmationMail($booking));
+                // Mail::to($user->email)->send(new BookingConfirmationMail($booking));
 
                 DB::commit();
 

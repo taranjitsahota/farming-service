@@ -11,7 +11,7 @@ class CreateVillagesTable extends Migration
         Schema::create('villages', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('city_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tehsil_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

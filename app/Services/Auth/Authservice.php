@@ -23,6 +23,7 @@ class AuthService
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'substation_id' => $request->substation_id, 
                 'country_code' => $request->country_code,
                 'contact_number' => $request->contact_number,
             ];

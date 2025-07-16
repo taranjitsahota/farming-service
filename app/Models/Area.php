@@ -10,11 +10,16 @@ class Area extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['city_id', 'state_id', 'village_id', 'pincode', 'village_id', 'is_enabled'];
+    protected $fillable = ['tehsil_id','substation_id' , 'district_id', 'state_id', 'village_id', 'pincode', 'village_id', 'is_enabled'];
 
-    public function city()
+    public function tehsil()
     {
-        return $this->belongsTo(City::class);
+        return $this->belongsTo(Tehsil::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
     }
 
     public function state()
@@ -29,5 +34,10 @@ class Area extends Model
     public function village()
     {
         return $this->belongsTo(Village::class);
+    }
+
+    public function substation()
+    {
+        return $this->belongsTo(Substation::class);
     }
 }
