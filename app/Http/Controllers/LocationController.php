@@ -23,12 +23,12 @@ class LocationController extends Controller
     public function getDistricts($state_id)
     {
         $data = District::select('id', 'name')->where('state_id', $state_id)->get();
-        return $this->responseWithSuccess($data, 'Cities fetched successfully', 200);
+        return $this->responseWithSuccess($data, 'Districts fetched successfully', 200);
     }
     public function getTehsils($district_id)
     {
         $data = Tehsil::select('id', 'name')->where('district_id', $district_id)->get();
-        return $this->responseWithSuccess($data, 'Cities fetched successfully', 200);
+        return $this->responseWithSuccess($data, 'Tehsils fetched successfully', 200);
     }
 
     public function getServicableVillages($tehsil_id)
