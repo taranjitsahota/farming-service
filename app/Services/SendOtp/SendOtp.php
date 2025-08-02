@@ -2,9 +2,9 @@
 
 namespace App\Services\SendOtp;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Twilio\Rest\Client;
 
 class SendOtp
 {
@@ -22,18 +22,26 @@ class SendOtp
     }
     public static function sendOtpPhone($number, $otp)
     {
-        Log::info('sms send' . $number);
-        $sid = env('TWILIO_SID');
-        $token = env('TWILIO_AUTH_TOKEN');
-        $twilio = new Client($sid, $token);
+        $url = env('MSG91_FLOW_URL');
+        $authKey = env('MSG91_AUTHKEY');
+        $templateId = env('MSG91_TEMPLATE_ID');
 
-        // Send the OTP message
-        $message = $twilio->messages->create($number, [
-            'from' => env('TWILIO_FROM'),
-            'body' => "Your OTP is: $otp"
-        ]);
-        Log::info('sms send' . $message);
-        // Return the message SID for tracking purposes
-        return $message->sid;
+        $payload = [
+            'template_id' => $templateId,
+            'recipients' => [
+                [
+                    'mobiles' => $number,
+                    'var1' => $otp,
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'accept' => 'application/json',
+            'authkey' => $authKey,
+            'content-type' => 'application/json'
+        ])->post($url, $payload);
+
+        return $response->successful();
     }
 }

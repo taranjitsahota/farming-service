@@ -24,8 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'country_code',
-        'contact_number',
+        'phone',
         'profile_completed',
         'profile_photo_url',
         'profile_photo_path',
@@ -59,11 +58,6 @@ class User extends Authenticatable
         'role' => RoleEnum::class,  // Cast to the enum
         'profile_completed' => 'boolean',
     ];
-
-    public function getFullPhoneNumberAttribute()
-    {
-        return $this->country_code . $this->contact_number;
-    }
 
     public function substation()
     {

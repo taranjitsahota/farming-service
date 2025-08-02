@@ -17,7 +17,7 @@ class InterestedUser extends Model
         'district_id',
         'name',
         'email',
-        'contact_number',
+        'phone',
         'village_name',
         'pincode',
         'district',

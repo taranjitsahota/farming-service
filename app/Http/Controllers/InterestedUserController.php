@@ -147,7 +147,7 @@ class InterestedUserController extends Controller
                 return [
                     'id'           => $area->id,
                     'name'         => $area->name,
-                    'contact'      => $area->contact_number,
+                    'contact'      => $area->phone,
                     'email'        => $area->email,
                     'village_name' => $area->village_name,
                     'pincode'      => $area->pincode,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,6 +14,11 @@ class ServiceArea extends Model
     protected $table = 'serviceareas'; 
     
     protected $fillable = ['service_id' , 'substation_id' , 'area_id','is_enabled'];    
+
+     protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
+    }
 
     public function area()
     {

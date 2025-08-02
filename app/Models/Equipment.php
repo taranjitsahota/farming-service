@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +22,12 @@ class Equipment extends Model
         'inventory',
         'is_enabled',
     ];
+
+     protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class);

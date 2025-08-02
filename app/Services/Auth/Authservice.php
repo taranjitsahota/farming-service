@@ -14,8 +14,8 @@ use Illuminate\Auth\Events\Registered;
 
 class AuthService
 {
-    public static function  register($request,$role = null)
-    {
+    public static function register($request,$role = null)
+    {   
         try {
             DB::beginTransaction();
 
@@ -25,7 +25,7 @@ class AuthService
                 'password' => Hash::make($request->password),
                 'substation_id' => $request->substation_id, 
                 'country_code' => $request->country_code,
-                'contact_number' => $request->contact_number,
+                'phone' => $request->phone,
             ];
     
             if ($role) {

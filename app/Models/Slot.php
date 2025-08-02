@@ -25,16 +25,6 @@ class Slot extends Model
         return $this->belongsTo(Crop::class);
     }
 
-    public function attachment()
-    {
-        return $this->belongsTo(Attachment::class);
-    }
-
-    public function vehicle()
-    {
-        return $this->belongsTo(Vehicle::class);
-    }
-
     public function service()
     {
         return $this->belongsTo(Service::class);

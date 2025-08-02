@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('village_id')->nullable();
             $table->string('name');
             $table->string('email');
-            $table->string('contact_number');
+            $table->string('phone');
             $table->string('village_name');
             $table->string('pincode');
             $table->string('district');

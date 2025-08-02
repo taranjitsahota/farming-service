@@ -15,8 +15,7 @@
         "laravel/tinker": "^2.8",
         "laravel/vapor-cli": "^1.65",
         "laravel/vapor-core": "^2.37",
-        "razorpay/razorpay": "^2.9",
-        "twilio/sdk": "^8.3"
+        "razorpay/razorpay": "^2.9"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

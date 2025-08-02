@@ -15,7 +15,7 @@ class WebsiteController extends Controller
         try {
             $request->validate([
                 'name' => 'required',
-                'contact_number' => 'required',
+                'phone' => 'required',
                 'email' => 'required|email',
                 'village_name' => 'required',
                 'pincode' => 'required',
@@ -29,7 +29,7 @@ class WebsiteController extends Controller
 
             InterestedUser::create([
                 'name' => $data['name'],
-                'contact_number' => $data['contact_number'],
+                'phone' => $data['phone'],
                 'email' => $data['email'],
                 'village_name' => $data['village_name'],
                 'pincode' => $data['pincode'],
@@ -45,7 +45,7 @@ class WebsiteController extends Controller
                     ->html("
                     <h2>New Contact Form Submission</h2>
                     <p><strong>Farmer Name:</strong> {$data['name']}</p>
-                    <p><strong>Contact Number:</strong> {$data['contact_number']}</p>
+                    <p><strong>Contact Number:</strong> {$data['phone']}</p>
                     <p><strong>Email:</strong> {$data['email']}</p>
                     <p><strong>Village:</strong> {$data['village_name']}</p>
                     <p><strong>Pincode:</strong> {$data['pincode']}</p>

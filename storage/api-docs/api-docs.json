@@ -432,7 +432,7 @@
                                     "password",
                                     "password_confirmation",
                                     "country_code",
-                                    "contact_number",
+                                    "phone",
                                     "role"
                                 ],
                                 "properties": {

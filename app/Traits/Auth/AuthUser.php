@@ -38,7 +38,7 @@ trait AuthUser
     {
         try {
 
-            $user = User::where('contact_number', $request->contact_number)->first();
+            $user = User::where('phone', $request->phone)->first();
 
             if (!$user) {
                 return false;

@@ -32,7 +32,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users|max:255',
             'password' => 'required|string|confirmed|min:8|max:25',
             // 'country_code' => 'required|string|max:5',
-            'contact_number' => 'required|unique:users,contact_number|max:15',
+            'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
             // 'role' => 'required|string|max:12',
         ]);
 
@@ -42,7 +42,7 @@ class UserController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'country_code' => $request->country_code,
-                'contact_number' => $request->contact_number,
+                'phone' => $request->phone,
                 'role' => $request->role
             ]);
 
@@ -73,15 +73,12 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            // 'password' => 'required|string|confirmed|min:8|max:25',
-            // 'country_code' => 'required|string|max:5',
-            'contact_number' => 'required|max:15',
-            // 'role' => 'required|string|max:12',
+            'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
         ]);
-        // dd($request->all());
+
         try {
             $user = User::find($id);
-            $user->update($request->only(['name', 'email', 'contact_number']));
+            $user->update($request->only(['name', 'email', 'phone', 'substation_id']));
 
 
             return $this->responseWithSuccess($user, 'User updated successfully', 201);
@@ -113,7 +110,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'contact_number' => $user->contact_number,
+                    'phone' => $user->phone,
                     'role' => $user->role,
                     'substation' => $user->substation ? $user->substation->name : null,
                     'substation_id' => $user->substation ? $user->substation->id : null
@@ -128,8 +125,19 @@ class UserController extends Controller
     public function driverList()
     {
         try{
-            $user = User::where('role', 'driver')->get();
-            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+            $user = User::where('role', 'driver')->with('substation')->get();
+            $formatter = $user->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->role,
+                    'substation' => $user->substation ? $user->substation->name : null,
+                    'substation_id' => $user->substation ? $user->substation->id : null
+                ];
+            });
+            return $this->responseWithSuccess($formatter, 'Driver fetched successfully', 200);
         }catch(\Exception $e){
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

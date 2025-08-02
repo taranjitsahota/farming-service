@@ -37,13 +37,13 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
-     *             required={"name", "email", "password", "password_confirmation", "country_code", "contact_number", "role"},
+     *             required={"name", "email", "password", "password_confirmation", "phone", "role"},
      *             @OA\Property(property="name", type="string", example="John Doe"),
      *             @OA\Property(property="email", type="string", example="john.doe@example.com"),
      *             @OA\Property(property="password", type="string", example="password123"),
      *             @OA\Property(property="password_confirmation", type="string", example="password123"),
      *             @OA\Property(property="country_code", type="string", example="+91"),
-     *             @OA\Property(property="contact_number", type="string", example="1234567890"),
+     *             @OA\Property(property="phone", type="string", example="1234567890"),
      *             @OA\Property(property="role", type="string", example="admin")
      *         )
      *     ),
@@ -63,9 +63,7 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users|max:255',
                 'password' => 'required|string|confirmed|min:8|max:25',
-                // 'country_code' => 'required|string|max:5',
-                // 'contact_number' => 'required|unique:users,contact_number|max:15',
-                'contact_number' => 'required|max:15',
+                'phone' => 'required|max:15',
                 'role' => 'required|string|max:12',
                 'substation_id' => 'required_if:role,admin|exists:substations,id',
             ]);
@@ -117,6 +115,7 @@ class AuthController extends Controller
     public function loginSuperadminAdmin(Request $request)
     {
         try {
+
             $request->validate([
                 'email' => 'required|email|exists:users,email',
                 'password' => 'required|string',
@@ -133,19 +132,23 @@ class AuthController extends Controller
 
                     $otp = GenerateOtp::GenereateOtp();
                     $sendEmail = SendOtp::SendOtpMail($user->email, $otp);
-                    if ($sendEmail) {
-                        $this->storeOtpVerification($user->id, $otp);
 
+                    if ($sendEmail) {
+
+                        $this->storeOtpVerification($user->id, $otp);
 
                         $data = [
                             'user_id' => $user->id,
-                            'otp' => $otp,
+                            'otp' => true,
                             'email' => $user->email,
                         ];
 
                         return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.', 200);
+
                     } else {
+
                         return $this->responseWithError('Something went wrong!', 500);
+                        
                     }
                 }
 
@@ -187,10 +190,10 @@ class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name", "contact_number", "country_code", "password"},
+     *             required={"name", "phone", "country_code", "password"},
      *             @OA\Property(property="name", type="string", example="John Doe", description="User's full name"),
      *             @OA\Property(property="email", type="string", example="johndoe@example.com", description="User's email (optional, must be unique)"),
-     *             @OA\Property(property="contact_number", type="string", example="9876543210", description="User's contact number (must be unique)"),
+     *             @OA\Property(property="phone", type="string", example="9876543210", description="User's contact number (must be unique)"),
      *             @OA\Property(property="country_code", type="string", example="+91", description="Country code of the user's phone number"),
      *             @OA\Property(property="password", type="string", example="1234", description="4-6 digit password for authentication"),
      *         )
@@ -207,7 +210,7 @@ class AuthController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'nullable|email|unique:users,email|max:255',
-                'contact_number' => 'required|unique:users,contact_number|max:15',
+                'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
                 'country_code' => 'required|string|max:5',
                 'password' => 'required|min:4|max:6',
             ]);
@@ -293,8 +296,8 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
-     *             required={"contact_number", "password"},
-     *             @OA\Property(property="contact_number", type="string", example="9876543210"),
+     *             required={"phone", "password"},
+     *             @OA\Property(property="phone", type="string", example="9876543210"),
      *             @OA\Property(property="password", type="string", example="1234")
      *         )
      *     ),
@@ -311,7 +314,7 @@ class AuthController extends Controller
         try {
 
             $request->validate([
-                'contact_number' => 'required|exists:users,contact_number',
+                'phone' => 'required|exists:users,phone',
                 'password' => 'required',
             ]);
 
@@ -344,20 +347,19 @@ class AuthController extends Controller
         try {
             $request->validate([
                 'name' => 'required|string|max:255',
-                // 'contact_number' => 'required|unique:users|digits:10',
-                'contact_number' => 'required|digits:10',
+                'phone' => 'required|unique:users,phone|regex:/^\d{5,15}$/',
+                'country_code' => 'required|string|max:3',
                 'email' => 'nullable|email',
                 'pin' => 'required|min:6|confirmed',
             ], [
-                'contact_number.unique' => 'You are already registered.',
+                'phone.unique' => 'You are already registered.',
             ]);
 
             $otp = GenerateOtp::GenereateOtp();
 
+            Cache::put("otp_{$request->phone}", $otp, now()->addMinutes(5));
 
-            Cache::put("otp_{$request->contact_number}", $otp, now()->addMinutes(5));
-
-            $number = '+91' . $request->contact_number;
+            $number = '+91' . $request->phone;
 
             $messageSid = SendOtp::sendOtpPhone($number, $otp);
 
@@ -387,10 +389,15 @@ class AuthController extends Controller
         // add more fields to validate the things
         $request->validate([
             'otp' => 'required',
+            'phone' => 'required|digits:10',
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email',
+            'pin' => 'required|min:6|confirmed',
+            'country_code' => 'required|string|max:5',
         ]);
 
         try {
-            $cachedOtp = Cache::get("otp_{$request->contact_number}");
+            $cachedOtp = Cache::get("otp_{$request->phone}");
             // dd($cachedOtp);
             if ($cachedOtp != $request->otp) {
                 return response()->json(['message' => 'Invalid OTP'], 400);
@@ -400,12 +407,12 @@ class AuthController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'contact_number' => $request->contact_number,
+                'phone' => $request->phone,
                 'country_code' => '+91',
                 'password' => bcrypt($request->pin),
             ]);
 
-            Cache::forget("otp_{$request->contact_number}");
+            Cache::forget("otp_{$request->phone}");
 
             return $this->responseWithSuccess([], 'User registered successfully', 200);
         } catch (\Exception $e) {
@@ -567,7 +574,7 @@ class AuthController extends Controller
 
             if ($request->contact_type === 'phone') {
                 // Check if the user has a valid phone number
-                if (!$user->contact_number) {
+                if (!$user->phone) {
                     return $this->responseWithError('Phone number not found for this user', 400, []);
                 }
 
@@ -642,7 +649,7 @@ class AuthController extends Controller
             RateLimiter::hit($key, 60);
 
             $user = $contactType === 'phone' ?
-                User::where('contact_number', $contact)->first() :
+                User::where('phone', $contact)->first() :
                 User::where('email', $contact)->first();
 
             if (!$user) {

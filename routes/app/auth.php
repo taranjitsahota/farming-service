@@ -7,7 +7,7 @@ use App\Http\Controllers\AuthController;
 
 //----------------------------------------------Without middlware routes--------------------------------------------------------------
 
-    // Route::post('/register-user', [AuthController::class, 'registerUser']);
+    Route::post('/register-user', [AuthController::class, 'registerUser']);
     Route::post('/send-otp-user', [AuthController::class, 'sendOtpUser']);
     Route::post('/verify-otp-user', [AuthController::class, 'verifyOtpUser']);
     Route::post('/login-user', [AuthController::class, 'loginUser']);
