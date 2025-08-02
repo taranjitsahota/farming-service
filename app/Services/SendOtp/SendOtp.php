@@ -24,7 +24,7 @@ class SendOtp
     {
         $url = env('MSG91_FLOW_URL');
         $authKey = env('MSG91_AUTHKEY');
-        $templateId = env('MSG91_TEMPLATE_ID');
+        $templateId = env('MSG91_TEMPLATE_ID_OTP');
 
         $payload = [
             'template_id' => $templateId,
