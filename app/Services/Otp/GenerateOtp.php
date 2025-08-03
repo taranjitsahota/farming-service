@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\GenerateOtp;
+namespace App\Services\Otp;
 
 use App\Services\SendEmail\SendOtpEmail;
 use Exception;

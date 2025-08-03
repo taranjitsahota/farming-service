@@ -31,9 +31,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users|max:255',
             'password' => 'required|string|confirmed|min:8|max:25',
-            // 'country_code' => 'required|string|max:5',
             'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
-            // 'role' => 'required|string|max:12',
         ]);
 
         try {
@@ -41,7 +39,6 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
-                'country_code' => $request->country_code,
                 'phone' => $request->phone,
                 'role' => $request->role
             ]);

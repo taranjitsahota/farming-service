@@ -6,9 +6,9 @@ use App\Jobs\SendOtpJob;
 use App\Models\OtpVerification;
 use App\Models\User;
 use App\Models\UserInfo;
-use App\Services\GenerateOtp\GenerateOtp;
-use App\Services\SendOtp\SendOtp;
-use App\Services\VerifyOtp\VerifyOtp;
+use App\Services\Otp\GenerateOtp;
+use App\Services\Otp\SendOtp;
+use App\Services\Otp\VerifyOtp;
 use App\Traits\Auth\AuthUser;
 use Exception;
 use Illuminate\Http\Request;
@@ -42,7 +42,6 @@ class AuthController extends Controller
      *             @OA\Property(property="email", type="string", example="john.doe@example.com"),
      *             @OA\Property(property="password", type="string", example="password123"),
      *             @OA\Property(property="password_confirmation", type="string", example="password123"),
-     *             @OA\Property(property="country_code", type="string", example="+91"),
      *             @OA\Property(property="phone", type="string", example="1234567890"),
      *             @OA\Property(property="role", type="string", example="admin")
      *         )
@@ -144,11 +143,9 @@ class AuthController extends Controller
                         ];
 
                         return $this->responseWithSuccess($data, 'OTP has been sent to your email. Please verify it.', 200);
-
                     } else {
 
                         return $this->responseWithError('Something went wrong!', 500);
-                        
                     }
                 }
 
@@ -190,11 +187,10 @@ class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name", "phone", "country_code", "password"},
+     *             required={"name", "phone", "password"},
      *             @OA\Property(property="name", type="string", example="John Doe", description="User's full name"),
      *             @OA\Property(property="email", type="string", example="johndoe@example.com", description="User's email (optional, must be unique)"),
      *             @OA\Property(property="phone", type="string", example="9876543210", description="User's contact number (must be unique)"),
-     *             @OA\Property(property="country_code", type="string", example="+91", description="Country code of the user's phone number"),
      *             @OA\Property(property="password", type="string", example="1234", description="4-6 digit password for authentication"),
      *         )
      *     ),
@@ -211,7 +207,6 @@ class AuthController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'nullable|email|unique:users,email|max:255',
                 'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
-                'country_code' => 'required|string|max:5',
                 'password' => 'required|min:4|max:6',
             ]);
 
@@ -348,32 +343,38 @@ class AuthController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'phone' => 'required|unique:users,phone|regex:/^\d{5,15}$/',
-                'country_code' => 'required|string|max:3',
                 'email' => 'nullable|email',
                 'pin' => 'required|min:6|confirmed',
             ], [
                 'phone.unique' => 'You are already registered.',
             ]);
 
+            // Create temporary unverified user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => bcrypt($request->pin),
+                'is_verified' => false,
+            ]);
+
             $otp = GenerateOtp::GenereateOtp();
 
-            Cache::put("otp_{$request->phone}", $otp, now()->addMinutes(5));
+            $number = $request->phone;
 
-            $number = '+91' . $request->phone;
+            $sendMsg = SendOtp::sendOtpPhone($number, $otp);
 
-            $messageSid = SendOtp::sendOtpPhone($number, $otp);
+            if (!$sendMsg) {
+                return $this->responseWithError('Something went wrong!', 500, 'Failed to send OTP');
+            }
+
+            $this->storeOtpVerification($user->id, $otp);
 
             $data = [
-                // 'sid' => $messageSid
-                'otp' => $otp
+                'user_id' => $user->id
             ];
 
             return $this->responseWithSuccess($data, 'OTP sent to your phone successfully.', 200);
-
-            // Send OTP logic here (e.g., via Twilio)
-
-            // return $this->responseWithSuccess($otp,'OTP sent successfully', 200);
-
         } catch (\Illuminate\Validation\ValidationException $th) {
 
             $firstError = collect($th->validator->errors()->all())->first();
@@ -389,32 +390,33 @@ class AuthController extends Controller
         // add more fields to validate the things
         $request->validate([
             'otp' => 'required',
-            'phone' => 'required|digits:10',
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'pin' => 'required|min:6|confirmed',
-            'country_code' => 'required|string|max:5',
+            'user_id' => 'required|exists:users,id',
         ]);
 
         try {
-            $cachedOtp = Cache::get("otp_{$request->phone}");
-            // dd($cachedOtp);
-            if ($cachedOtp != $request->otp) {
-                return response()->json(['message' => 'Invalid OTP'], 400);
+            $user = User::where('id', $request->user_id)
+                ->where('is_verified', false)
+                ->first();
+
+            if (!$user) {
+                return $this->responseWithError('No unverified user found or already verified.', 422);
             }
 
-            // Create user only after OTP verified
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'country_code' => '+91',
-                'password' => bcrypt($request->pin),
-            ]);
+            $otpRecord = Otpverification::where('user_id', $user->id)->first();
 
-            Cache::forget("otp_{$request->phone}");
+            if (!$otpRecord || $otpRecord->otp !== $request->otp) {
+                return $this->responseWithError('Invalid OTP.', 422);
+            }
 
-            return $this->responseWithSuccess([], 'User registered successfully', 200);
+            if ($otpRecord->expires_at < now()) {
+                return $this->responseWithError('OTP expired.', 422);
+            }
+
+            // Mark as verified
+            $user->update(['is_verified' => true]);
+            $otpRecord->delete();
+
+            return $this->responseWithSuccess([], 'User registered successfully.', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

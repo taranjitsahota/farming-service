@@ -15,37 +15,35 @@ Route::get('/country-codes', function () {
     return response()->json(config('country_codes'));
 });
 
-    Route::post('/login', [AuthController::class, 'loginSuperadminAdmin']);
-    Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1'); ;
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/send-otp', [AuthController::class, 'sendOtpForPasswordReset'])
+Route::post('/login', [AuthController::class, 'loginSuperadminAdmin']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');;
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('/change-password', [AuthController::class, 'changePassword']);
+Route::post('/send-otp', [AuthController::class, 'sendOtpForPasswordReset'])
     ->middleware('throttle:5,1'); // Max 5 requests per minute
-    
-    
-    
-    
-    //------------------------------------------sanctum routes without role based----------------------------------------------------------
-    
-    Route::middleware('auth:sanctum')->group(function () {
-        
-        
-        
-        
-        Route::post('/logout', [AuthController::class, 'logout']);
-        
-        
-        
-        //-------------------------------------------superadmin routes--------------------------------------------------------------------------
-        
-        
-        
-        Route::middleware('role:superadmin')->group(function () {
-            
-    });
 
 
-//-------------------------------------------Driver routes--------------------------------------------------------------------------
+
+
+//------------------------------------------sanctum routes without role based----------------------------------------------------------
+
+Route::middleware('auth:sanctum')->group(function () {
+
+
+
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+
+
+    //-------------------------------------------superadmin routes--------------------------------------------------------------------------
+
+
+
+    Route::middleware('role:superadmin')->group(function () {});
+
+
+    //-------------------------------------------Driver routes--------------------------------------------------------------------------
 
 
 
@@ -68,7 +66,7 @@ Route::get('/country-codes', function () {
 
 
 
-    Route::middleware(['role:user','check.process.complete'])->get('/user-dashboard', function () {
+    Route::middleware(['role:user', 'check.process.complete'])->get('/user-dashboard', function () {
         return response()->json(['message' => 'Welcome to the user dashboard']);
     });
 
@@ -87,11 +85,8 @@ Route::get('/country-codes', function () {
     //---------------------------------------superadmin and admin routes----------------------------------------------------------------
 
 
-    
+
     Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->get('/dashboard', function () {
         return response()->json(['message' => 'Welcome to the dashboard for admin and superadmin']);
     });
-
-    
-    
 });

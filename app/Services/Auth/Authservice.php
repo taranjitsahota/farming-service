@@ -24,7 +24,6 @@ class AuthService
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'substation_id' => $request->substation_id, 
-                'country_code' => $request->country_code,
                 'phone' => $request->phone,
             ];
     

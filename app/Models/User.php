@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'is_verified',
         'profile_completed',
         'profile_photo_url',
         'profile_photo_path',

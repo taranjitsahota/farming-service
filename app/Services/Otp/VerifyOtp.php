@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\VerifyOtp;
+namespace App\Services\Otp;
 
 use App\Models\Otpverification;
 

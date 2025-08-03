@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\SendOtp;
+namespace App\Services\Otp;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
