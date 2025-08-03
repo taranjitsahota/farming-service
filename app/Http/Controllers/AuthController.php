@@ -402,7 +402,7 @@ class AuthController extends Controller
                 return $this->responseWithError('No unverified user found or already verified.', 422);
             }
 
-            $otpRecord = Otpverification::where('user_id', $user->id)->first();
+            $otpRecord = OtpVerification::where('user_id', $user->id)->first();
 
             if (!$otpRecord || $otpRecord->otp !== $request->otp) {
                 return $this->responseWithError('Invalid OTP.', 422);

@@ -2,13 +2,13 @@
 
 namespace App\Services\Otp;
 
-use App\Models\Otpverification;
+use App\Models\OtpVerification;
 
 class VerifyOtp
 {
     public static function verifyOtp($userId, $otp)
     {
-        $userOtp = Otpverification::where('user_id',$userId)->first();
+        $userOtp = OtpVerification::where('user_id',$userId)->first();
 
         if (!$userOtp || $userOtp->otp !== $otp || $userOtp->expires_at < now()) {
             return false;

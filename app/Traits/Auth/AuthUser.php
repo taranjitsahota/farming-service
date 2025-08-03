@@ -2,7 +2,7 @@
 
 namespace App\Traits\Auth;
 
-use App\Models\Otpverification;
+use App\Models\OtpVerification;
 use App\Models\User;
 use App\Services\Auth\AuthService;
 use App\Services\CompleteProfile\Completeprofile;
@@ -71,7 +71,7 @@ trait AuthUser
         
     public function isOtpRequired($user, $browserHash)
     {
-        $lastVerification = Otpverification::where('user_id', $user->id)
+        $lastVerification = OtpVerification::where('user_id', $user->id)
             ->where('browser_hash', $browserHash)
             ->latest()
             ->first();
@@ -88,7 +88,7 @@ trait AuthUser
         
     public function storeOtpVerification($user, $otp)
     {
-        Otpverification::updateOrCreate(
+        OtpVerification::updateOrCreate(
             ['user_id' => $user],
             [
                 'otp' => $otp,
