@@ -7,12 +7,12 @@ use App\Models\BusinessTiming;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Traits\Subscriptions\IsSubscribed;
+use App\Traits\Subscriptions\isSubscribed;
 
 class BookingController extends Controller
 {
 
-    use IsSubscribed;
+    use isSubscribed;
 
     /**
      * Display a listing of the resource.
