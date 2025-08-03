@@ -42,6 +42,11 @@ class SendOtp
             'content-type' => 'application/json'
         ])->post($url, $payload);
 
+        if ($response->failed()) {
+            Log::error('Failed to send OTP via SMS: ' . $response->body());
+            return false;
+        }
+        
         return $response->successful();
     }
 }

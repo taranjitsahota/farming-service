@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\SendOtp\SendOtp;
+use App\Services\Otp\SendOtp;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
