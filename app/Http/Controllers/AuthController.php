@@ -580,13 +580,13 @@ class AuthController extends Controller
                     return $this->responseWithError('Phone number not found for this user', 400, []);
                 }
 
-                $messageSid = SendOtp::sendOtpPhone($user->full_phone_number, $otp);
+                $sendOtp = SendOtp::sendOtpPhone($user->phone, $otp);
 
-                $data = [
-                    'sid' => $messageSid
-                ];
+                if (!$sendOtp) {
+                    return $this->responseWithError('Failed to send OTP via SMS', 500, []);
+                }
 
-                return $this->responseWithSuccess($data, 'New OTP sent to your phone.', 200);
+                return $this->responseWithSuccess([], 'New OTP sent to your phone.', 200);
             } else {
                 // Check if the user has a valid email
                 if (!$user->email) {
