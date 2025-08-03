@@ -662,7 +662,7 @@ class AuthController extends Controller
             $this->storeOtpVerification($user->id, $otp);
 
             if ($contactType === 'phone') {
-                dispatch(new SendOtpJob($user->full_phone_number, $otp, $contactType));
+                dispatch(new SendOtpJob($user->phone, $otp, $contactType));
                 return $this->responseWithSuccess(['user_id' => $user->id], 'OTP sent successfully via phone', 200);
             } else {
                 dispatch(new SendOtpJob($user->email, $otp, $contactType));
