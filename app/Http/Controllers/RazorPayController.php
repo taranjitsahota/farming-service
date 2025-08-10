@@ -75,7 +75,7 @@ class RazorPayController extends Controller
 
                 $booking = Booking::where('id', $request->booking_id)
                     ->where('user_id', auth()->id())
-                    ->where('status', 'pending')
+                    ->where('payment_status', 'pending')
                     ->first();
 
                 if (!$booking) {
@@ -99,7 +99,8 @@ class RazorPayController extends Controller
                 // }
 
                 $booking->update([
-                    'status' => 'confirmed',
+                    'payment_status' => 'confirmed',
+                    'booking_status' => 'completed',
                     'payment_id' => $request->razorpay_payment_id,
                     'payment_method' => 'razorpay',
                     'paid_at' => now()
@@ -113,7 +114,7 @@ class RazorPayController extends Controller
 
                 DB::commit();
 
-                return $this->responseWithSuccess(null, 'Payment verified & booking confirmed');
+                return $this->responseWithSuccess(null, 'Payment verified & booking confirmed',200);
             }
 
             return $this->responseWithError('Payment not captured', 400);

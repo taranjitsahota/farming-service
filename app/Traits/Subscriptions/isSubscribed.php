@@ -3,7 +3,7 @@
 namespace App\Traits\Subscriptions;
 
 use App\Models\User;
-use App\Models\Subscriptions;
+use App\Models\Subscription;
 
 trait isSubscribed
 {
@@ -17,7 +17,7 @@ trait isSubscribed
      */
     public function isSubscribed(User $user, $requiredServiceId, $requiredArea): bool
     {
-        $subscription = Subscriptions::where('user_id', $user->id)
+        $subscription = Subscription::where('user_id', $user->id)
             ->where('start_date', '<=', today())
             ->where('end_date', '>=', today())
             ->first();

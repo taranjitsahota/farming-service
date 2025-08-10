@@ -16,11 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('razorpay_subscription_id')->unique();
             $table->enum('plan_type', ['general', 'sugarcane']);
-            $table->decimal('land_area', 8, 2); // in kanals
-            $table->decimal('total_price', 10, 2);
+            $table->integer('kanals');
+            $table->decimal('price_per_kanal', 8, 2);
+            $table->integer('kanals_used')->default(0);
             $table->date('start_date');
             $table->date('end_date');
-            $table->string('status');
+            $table->enum('status',['created', 'active', 'cancelled', 'completed'])->default('active');
             $table->timestamps();
         });
     }

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
 
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     Route::middleware('role:superadmin,admin')->group(function () {
         Route::post('/bookings/available-slots', [BookingController::class, 'getAvailableSlots']);
         Route::post('/bookings/book', [BookingController::class, 'bookSlot']);
@@ -13,7 +13,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-all-bookings', [BookingController::class, 'getAllBookings']);
         Route::get('/get-pending-bookings', [BookingController::class, 'getPendingBookings']);
         Route::apiResource('bookings', BookingController::class);
-        
     });
-
 });
