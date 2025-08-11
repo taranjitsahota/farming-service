@@ -34,6 +34,7 @@ class EligibilityController extends Controller
 
     public function checkServiceAvailability(Request $request)
     {
+        // dd(1);
         try {
             $request->validate([
                 'village' => 'required|integer',
@@ -46,7 +47,7 @@ class EligibilityController extends Controller
                 ->first();
 
             if (!$area) {
-                return $this->errorResponse('Service not available in this area', 401);
+                return $this->responseWithError('Service not available in this area', 401);
             }
 
             // Find service-area mapping (this also has substation_id now)
@@ -55,7 +56,7 @@ class EligibilityController extends Controller
                 ->first();
 
             if (!$serviceArea) {
-                return $this->errorResponse('Service not available in this area', 401);
+                return $this->responseWithError('Service not available in this area', 401);
             }
 
             // Get substation_id from serviceArea

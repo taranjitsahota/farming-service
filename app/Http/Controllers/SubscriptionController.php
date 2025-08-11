@@ -148,7 +148,7 @@ class SubscriptionController extends Controller
         $subscription = $razorpay->subscription->fetch($razorpaySubscriptionId);
         // dd($subscription);
         if ($subscription->status === 'authenticated') {
-            Subscription::where('razorpay_subscription_id', 'sub_R3XN7A0kmUdFvx')
+            Subscription::where('razorpay_subscription_id', 'sub_R3Zv4ABq2cx27E')
                 ->update(['status' => 'active']);
             return $this->responseWithSuccess($subscription, 'Subscription verified successfully', 200);
         }
