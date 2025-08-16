@@ -183,6 +183,7 @@ class AreaController extends Controller
                 ->where('tehsil_id', $request->tehsil_id)
                 ->where('village_id', $request->village_id)
                 ->where('substation_id', $request->substation_id)
+                ->where('id', '!=', $id)
                 ->first();
 
             if ($exists) {
