@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InterestedUser;
+use App\Services\InterestedUsers\InterestedUsers;
 use Dotenv\Exception\ValidationException;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,7 @@ class InterestedUserController extends Controller
                     'id'           => $area->id,
                     'user_id'      => $area->user_id,
                     'name'         => $area->user->name,
-                    'contact'      => $area->user->contact,
+                    'contact'      => $area->user->phone,
                     'village_id'   => $area->village_id,
                     'village_name' => $area->village?->name ?? null,
                     'tehsil_id'      => $area->tehsil_id,
@@ -56,13 +57,8 @@ class InterestedUserController extends Controller
 
             $user = $request->user();
 
-            InterestedUser::create([
-                'user_id' => $user->id,
-                'state_id' => $request->state_id,
-                'district_id' => $request->district_id,
-                'village_id' => $request->village_id,
-                'type' => 'app'
-            ]);
+            app(InterestedUsers::class)
+        ->createInterestedUser($user, $request->only(['state_id','district_id','tehsil_id','village_id']));
 
             return $this->responseWithSuccess([], 'Interested user created successfully', 201);
         } catch (ValidationException $e) {

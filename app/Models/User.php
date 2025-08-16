@@ -26,7 +26,6 @@ class User extends Authenticatable
         'role',
         'phone',
         'is_verified',
-        'profile_completed',
         'profile_photo_url',
         'profile_photo_path',
         'substation_id',
@@ -57,7 +56,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'role' => RoleEnum::class,  // Cast to the enum
-        'profile_completed' => 'boolean',
     ];
 
     public function substation()

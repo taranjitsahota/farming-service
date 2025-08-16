@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -27,24 +27,28 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|string|confirmed|min:8|max:25',
-            'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
-        ]);
-
+        
         try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users|max:255',
+                'password' => 'required|digits:6|confirmed',
+                'phone' => 'required|unique:users,phone|regex:/^\+?[1-9]\d{1,14}$/',
+            ]);
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password),
+                'password' => Hash::make($request->password),
                 'phone' => $request->phone,
-                'role' => $request->role
+                'role' => $request->role,
+                'is_verified' => true
             ]);
 
             return $this->responseWithSuccess($user, 'User registered successfully', 201);
-        } catch (\Exception $e) {
+        } catch(\Illuminate\Validation\ValidationException $e){
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422, $e->validator->errors());
+        }catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }

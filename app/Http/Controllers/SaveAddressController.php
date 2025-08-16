@@ -63,7 +63,7 @@ class SaveAddressController extends Controller
 
             return $this->responseWithError('Invalid action');
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage());
+            return $this->responseWithError($e->getMessage(), 422);
         }
     }
 

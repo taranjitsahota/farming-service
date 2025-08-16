@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Models\ServiceArea;
+use App\Services\InterestedUsers\InterestedUsers;
 use Illuminate\Http\Request;
 
 class EligibilityController extends Controller
@@ -34,11 +35,12 @@ class EligibilityController extends Controller
 
     public function checkServiceAvailability(Request $request)
     {
-        // dd(1);
         try {
             $request->validate([
-                'village' => 'required|integer',
-                'service_id' => 'required|integer'
+                'state_id'   => 'required|exists:states,id|integer',
+                'tehsil_id'    => 'required|exists:tehsils,id|integer',
+                'district_id' => 'required|exists:districts,id|integer',
+                'village' => 'required|exists:villages,id|integer',
             ]);
 
             // Find the area for this village
@@ -47,20 +49,20 @@ class EligibilityController extends Controller
                 ->first();
 
             if (!$area) {
-                return $this->responseWithError('Service not available in this area', 401);
-            }
-
-            // Find service-area mapping (this also has substation_id now)
-            $serviceArea = ServiceArea::where('area_id', $area->id)
-                ->where('service_id', $request->service_id)
-                ->first();
-
-            if (!$serviceArea) {
+                app(InterestedUsers::class)->createInterestedUser(
+                    $request->user(),
+                    [
+                        'state_id' => $request->state_id,
+                        'district_id' => $request->district_id,
+                        'tehsil_id' => $request->tehsil_id,
+                        'village_id' => $request->village
+                    ]
+                );
                 return $this->responseWithError('Service not available in this area', 401);
             }
 
             // Get substation_id from serviceArea
-            $substationId = $serviceArea->substation_id;
+            $substationId = $area->substation_id;
 
             $data = [
                 'substation_id' => $substationId,

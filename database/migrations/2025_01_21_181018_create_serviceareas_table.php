@@ -15,12 +15,14 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('substation_id')->nullable();
             $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('equipment_id');
             $table->unsignedBigInteger('area_id');
             $table->boolean('is_enabled')->default(true);
             $table->softDeletes();
             $table->timestamps();
             
             $table->foreign('substation_id')->references('id')->on('substations')->onDelete('set null');
+            $table->foreign('equipment_id')->references('id')->on('equipments')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('area_id')->references('id')->on('areas')->onDelete('cascade');
         });

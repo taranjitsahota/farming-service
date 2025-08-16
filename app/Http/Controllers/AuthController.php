@@ -160,7 +160,6 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'profile_completed' => $user->profile_completed,
                     'profile_photo_url' => $user->profile_photo_url
                 ];
 
@@ -226,63 +225,6 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/complete-profile",
-     *     summary="Complete user profile",
-     *     description="Allows authenticated users to complete their profile by providing additional details.",
-     *     tags={"User Profile completion"},
-     *     security={{"sanctum":{}}}, 
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             type="object",
-     *             required={"first_name", "fathers_name", "pincode", "village", "post_office", "police_station", "district", "total_servicable_land"},
-     *             @OA\Property(property="first_name", type="string", example="John"),
-     *             @OA\Property(property="last_name", type="string", example="Doe"),
-     *             @OA\Property(property="fathers_name", type="string", example="Robert Doe"),
-     *             @OA\Property(property="pincode", type="string", example="123456"),
-     *             @OA\Property(property="village", type="string", example="Greenfield"),
-     *             @OA\Property(property="post_office", type="string", example="Greenfield PO"),
-     *             @OA\Property(property="police_station", type="string", example="Greenfield PS"),
-     *             @OA\Property(property="district", type="string", example="Central District"),
-     *             @OA\Property(property="total_servicable_land", type="string", example="5 acres")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, ref="#/components/responses/200"),
-     *     @OA\Response(response=401, ref="#/components/responses/401"),
-     *     @OA\Response(response=422, ref="#/components/responses/422"),
-     *     @OA\Response(response=500, ref="#/components/responses/500")
-     * )
-     */
-
-    public function completeUserProfile(Request $request)
-    {
-        try {
-            $request->validate([
-                // 'first_name' => 'required|string|max:255',
-                // 'last_name' => 'nullable|string|max:255',
-                'fathers_name' => 'required|string|max:255',
-                'pincode' => 'required|max:25',
-                'village' => 'required|string|max:255',
-                'post_office' => 'required|string|max:255',
-                'police_station' => 'required|string|max:255',
-                'district' => 'required|string|max:255',
-                'total_servicable_land' => 'required|string|max:255',
-            ]);
-
-
-
-            $this->processcompleteUserProfile($request);
-
-            return $this->responseWithSuccess([], 'Profile completed successfully!', 200);
-        } catch (\Illuminate\Validation\ValidationException $th) {
-            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
-        } catch (\Exception $e) {
-            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
-        }
-    }
-
-    /**
-     * @OA\Post(
      *     path="/api/login-user",
      *     summary="User login",
      *     description="Logs in a user using contact number and password",
@@ -305,18 +247,21 @@ class AuthController extends Controller
 
     public function loginUser(Request $request)
     {
-
         try {
-
-            $request->validate([
-                'phone' => 'required|exists:users,phone',
-                'password' => 'required',
-            ]);
+            $request->validate(
+                [
+                    'phone' => 'required|exists:users,phone',
+                    'password' => 'required',
+                ],
+                [
+                    'phone.exists' => 'User is not registered with us.',
+                ]
+            );
 
             $result = $this->processUser($request);
 
             if (!$result) {
-                return $this->responseWithError('Invalid PIN or contact number', 401);
+                return $this->responseWithError('Invalid PIN', 401);
             }
 
             [$user, $trimmedToken] = $result;
@@ -326,11 +271,11 @@ class AuthController extends Controller
                 'token' => $trimmedToken,
                 'username' => $user->name,
                 'role' => $user->role,
-                'profile_completed' => $user->profile_completed
             ];
             return $this->responseWithSuccess($data, 'Login successful', 200);
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
+            $firstError = collect($th->validator->errors()->all())->first();
+            return $this->responseWithError($firstError, 422, $th->validator->errors());
         } catch (\Exception $e) {
             return $this->responseWithError('Invalid Pin', 500, $e->getMessage());
         }
@@ -338,7 +283,6 @@ class AuthController extends Controller
 
     public function sendOtpUser(Request $request)
     {
-
         try {
             $request->validate([
                 'name' => 'required|string|max:255',
@@ -516,7 +460,6 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'role' => $user->role,
                     'profile_photo_url' => $user->profile_photo_url,
-                    'profile_completed' => $user->profile_completed
                 ];
 
                 return $this->responseWithSuccess($data, 'OTP verified successfully. Login successfull.', 200);

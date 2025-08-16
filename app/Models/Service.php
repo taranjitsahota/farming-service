@@ -10,20 +10,10 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'category' , 'substation_id' , 'equipment_id', 'is_enabled'];
-
-     protected static function booted()
-    {
-        static::addGlobalScope(new ServiceRoleScope);
-    }
+    protected $fillable = ['name', 'is_enabled'];
 
     public function equipment()
     {
-        return $this->belongsTo(Equipment::class);
-    }
-    
-     public function substation()
-    {
-        return $this->belongsTo(Substation::class);
+        return $this->hasMany(Equipment::class);
     }
 }

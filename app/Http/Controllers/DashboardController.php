@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Subscriptions;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ class DashboardController extends Controller
     {
         try {
             $bookings = Booking::where('booking_status', 'completed')->count();
-            // $subscriptions = Subscriptions::where('status', 'active')->count();
+            $subscriptions = Subscription::where('status', 'active')->count();
             $revenue = Booking::where('booking_status', 'completed')->sum('price');
             $drivers = User::where('role', 'driver')->count();
             $farmers = User::where('role', 'user')->count();
@@ -32,7 +32,7 @@ class DashboardController extends Controller
             //         ];
             //     });
 
-            $data = compact('bookings', 'revenue', 'drivers', 'farmers');
+            $data = compact('bookings', 'revenue', 'subscriptions', 'drivers', 'farmers');
 
             return $this->responseWithSuccess($data, 'Dashboard metrics fetched successfully', 200);
         } catch (\Exception $e) {

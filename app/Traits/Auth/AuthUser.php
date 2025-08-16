@@ -38,7 +38,7 @@ trait AuthUser
     {
         try {
 
-            $user = User::where('phone', $request->phone)->first();
+            $user = User::where('phone', $request->phone)->where('is_verified', true)->first();
 
             if (!$user) {
                 return false;
@@ -53,17 +53,6 @@ trait AuthUser
 
             return [$user, $trimmedToken];
 
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-        
-    public function processcompleteUserProfile($request)
-    {
-        try {
-            $user = Completeprofile::completeUserProfile($request);
-
-            return true;
         } catch (\Exception $e) {
             return false;
         }

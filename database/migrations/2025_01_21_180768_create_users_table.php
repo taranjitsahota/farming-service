@@ -23,7 +23,6 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->enum('role', ['superadmin', 'admin', 'user', 'driver'])->default('user');
             $table->unsignedBigInteger('substation_id')->nullable();
-            $table->boolean('profile_completed')->default(false);
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

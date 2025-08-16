@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::middleware(['role:user', 'check.process.complete'])->get('/user-dashboard', function () {
+    Route::middleware('role:user')->get('/user-dashboard', function () {
         return response()->json(['message' => 'Welcome to the user dashboard']);
     });
 

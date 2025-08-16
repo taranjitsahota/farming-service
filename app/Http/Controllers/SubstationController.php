@@ -12,11 +12,11 @@ class SubstationController extends Controller
      */
     public function index()
     {
-        try{
+        try {
             $substation = Substation::all();
             return $this->responseWithSuccess($substation, 'substation fetched successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'substation not found', 404);
+            return $this->responseWithError($e->getMessage(), 500, 'substation not found');
         }
     }
 
@@ -25,7 +25,7 @@ class SubstationController extends Controller
      */
     public function store(Request $request)
     {
-        try{
+        try {
             $request->validate([
                 'name' => 'required|unique:substations,name',
                 'is_enabled' => 'required',
@@ -33,10 +33,10 @@ class SubstationController extends Controller
 
             $substation = Substation::create($request->all());
             return $this->responseWithSuccess($substation, 'substation created successfully', 200);
-        } catch (\Illuminate\Validation\ValidationException $e){
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->responseWithError($e->getMessage(), 422);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'substation not created', 404);
+            return $this->responseWithError($e->getMessage(), 500, 'substation not created');
         }
     }
 
@@ -45,11 +45,11 @@ class SubstationController extends Controller
      */
     public function show(string $id)
     {
-        try{
+        try {
             $substation = Substation::find($id);
             return $this->responseWithSuccess($substation, 'substation fetched successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'substation not found', 404);
+            return $this->responseWithError($e->getMessage(), 500, 'substation not found');
         }
     }
 
@@ -58,17 +58,17 @@ class SubstationController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        try{
+        try {
             $request->validate([
-                // 'name' => 'required',
-                'is_enabled' => 'required',
+                'name'       => ['sometimes', 'required', 'unique:substations,name', 'string', 'max:25'],
+                'is_enabled' => ['sometimes', 'required', 'boolean'],
             ]);
 
             $substation = Substation::find($id);
             $substation->update($request->all());
             return $this->responseWithSuccess($substation, 'substation updated successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'substation not updated', 404);
+            return $this->responseWithError($e->getMessage(), 500,  'substation not updated');
         }
     }
 
@@ -77,12 +77,12 @@ class SubstationController extends Controller
      */
     public function destroy(string $id)
     {
-        try{
+        try {
             $substation = Substation::find($id);
             $substation->delete();
             return $this->responseWithSuccess(null, 'substation deleted successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'substation not deleted', 404);
+            return $this->responseWithError($e->getMessage(), 500,  'substation not deleted');
         }
     }
 }

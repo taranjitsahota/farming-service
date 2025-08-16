@@ -17,7 +17,7 @@ class CropController extends Controller
             $crop = Crop::all();
             return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+            return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
 
@@ -35,7 +35,7 @@ class CropController extends Controller
             $crop = Crop::create($request->all());
             return $this->responseWithSuccess($crop, 'crop created successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+            return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
 
@@ -48,16 +48,17 @@ class CropController extends Controller
             $crop = Crop::findOrFail($id);
             return $this->responseWithSuccess($crop, 'crop fetched successfully', 200);
         } catch (\Exception $e) {
-            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+            return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id) {
+    public function update(Request $request, string $id)
+    {
 
-        try{
+        try {
             $request->validate([
                 // 'name' => 'required',
                 'is_enabled' => 'required',
@@ -66,8 +67,8 @@ class CropController extends Controller
             $crop = Crop::findOrFail($id);
             $crop->update($request->all());
             return $this->responseWithSuccess($crop, 'crop updated successfully', 200);
-        }catch(\Exception $e){
-            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
 
@@ -76,12 +77,12 @@ class CropController extends Controller
      */
     public function destroy(string $id)
     {
-        try{
+        try {
             $crop = Crop::findOrFail($id);
             $crop->delete();
             return $this->responseWithSuccess($crop, 'crop deleted successfully', 200);
-        }catch(\Exception $e){
-            return $this->responseWithError($e->getMessage(), 'crop not found', 422);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
 }

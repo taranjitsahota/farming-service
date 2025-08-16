@@ -14,6 +14,7 @@ class Equipment extends Model
     protected $fillable = [
         'name',
         'substation_id',
+        'service_id',
         'image',
         'price_per_kanal',
         'min_kanal',
@@ -28,9 +29,9 @@ class Equipment extends Model
         static::addGlobalScope(new ServiceRoleScope);
     }
 
-    public function services()
+    public function service()
     {
-        return $this->hasMany(Service::class);
+        return $this->belongsTo(Service::class);
     }
     public function substation()
     {

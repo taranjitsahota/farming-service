@@ -7,6 +7,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::middleware('role:superadmin,admin')->group(function () {
         Route::apiResource('services', ServiceController::class);
-        Route::get('/service-by-equipment-id/{equipmentId}', [ServiceController::class, 'ServiceByEquipmentId']);
+        Route::get('/equipment-by-service-id/{equipmentId}', [ServiceController::class, 'EquipmentByServiceId']);
     });
 });

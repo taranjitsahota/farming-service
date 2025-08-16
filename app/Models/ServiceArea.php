@@ -11,11 +11,11 @@ class ServiceArea extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'serviceareas'; 
-    
-    protected $fillable = ['service_id' , 'substation_id' , 'area_id','is_enabled'];    
+    protected $table = 'serviceareas';
 
-     protected static function booted()
+    protected $fillable = ['service_id', 'substation_id', 'area_id', 'equipment_id', 'is_enabled'];
+
+    protected static function booted()
     {
         static::addGlobalScope(new ServiceRoleScope);
     }
@@ -30,9 +30,13 @@ class ServiceArea extends Model
         return $this->belongsTo(Service::class);
     }
 
-     public function substation()
+    public function substation()
     {
         return $this->belongsTo(Substation::class);
     }
 
+    public function equipment()
+    {
+        return $this->belongsTo(Equipment::class);
+    }
 }

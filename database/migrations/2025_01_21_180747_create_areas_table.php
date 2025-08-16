@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('substation_id')->nullable();
-            $table->unsignedBigInteger('tehsil_id');
-            $table->unsignedBigInteger('district_id');
             $table->unsignedBigInteger('state_id');
+            $table->unsignedBigInteger('district_id');
+            $table->unsignedBigInteger('tehsil_id');
             $table->unsignedBigInteger('village_id');
             $table->boolean('is_enabled')->default(true);
             $table->string('pincode')->nullable();

@@ -16,7 +16,24 @@ class SubscriptionController extends Controller
     public function index()
     {
         try {
-            $subscriptions = Subscription::where('user_id', auth()->id())->get();
+            $subscriptions = Subscription::with('user')->get();
+            $formatter = $subscriptions->map(function ($subscriptions) {
+                return [
+                    'name' => $subscriptions->user->name,
+                    'user_id' => $subscriptions->user_id,
+                    'email' => $subscriptions->user->email,
+                    'phone' => $subscriptions->user->phone,
+                    'id' => $subscriptions->id,
+                    'plan_type' => $subscriptions->plan_type,
+                    'kanals' => $subscriptions->kanals,
+                    'total_price' => $subscriptions->total_price,
+                    'status' => $subscriptions->status,
+                    'price_per_kanal' => $subscriptions->price_per_kanal,
+                    'location' => $subscriptions->location,
+                    'start_date' => $subscriptions->start_date,
+                    'end_date' => $subscriptions->end_date,
+                ];
+            });
             return $this->responseWithSuccess($subscriptions, 'Subscriptions fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('equipments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('substation_id')->nullable();
+            $table->unsignedBigInteger("service_id")->nullable();
             $table->string('name');
             $table->string('image')->nullable();
             $table->decimal('price_per_kanal', 8, 2);
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->foreign('substation_id')->references('id')->on('substations')->onDelete('set null');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('set null');
         });
     }
 

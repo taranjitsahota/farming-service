@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Service;
+use App\Models\Equipment;
 use App\Models\ServiceArea;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -30,14 +30,14 @@ class ServiceAreaController extends Controller
     public function index()
     {
         try {
-            $serviceAreas = ServiceArea::with('area.tehsil','area.district', 'area.state', 'area.village', 'service', 'service.equipment', 'substation')->get();
+            $serviceAreas = ServiceArea::with('area.tehsil', 'area.district', 'area.state', 'area.village', 'service', 'equipment', 'substation')->get();
 
             $formatted = $serviceAreas->map(function ($serviceArea) {
                 return [
                     'id' => $serviceArea->id,
-                    'equipment' => $serviceArea->service?->equipment->name,
-                    'equipment_id' => $serviceArea->service?->equipment_id,
-                    'service' => $serviceArea->service?->category,
+                    'equipment' => $serviceArea->equipment->name,
+                    'equipment_id' => $serviceArea->equipment_id,
+                    'service' => $serviceArea->service?->name,
                     'service_id' => $serviceArea->service_id,
                     'area_id' => $serviceArea->area_id,
                     'tehsil' => $serviceArea->area?->tehsil?->name,
@@ -79,28 +79,31 @@ class ServiceAreaController extends Controller
     {
         try {
             // Validate request
-            $validated = $request->validate([
+            $request->validate([
                 'equipment_id' => 'required|exists:equipments,id',
                 'service_id' => 'required|exists:services,id',
                 'area_id'    => 'required|exists:areas,id',
-                'substation_id' => 'required|exists:substations,id'
+                'substation_id' => 'required|exists:substations,id',
+                'is_enabled' => 'required|boolean'
             ]);
 
-            $validService = Service::where('id', $request->service_id)
+           $serviceArea = ServiceArea::where('service_id', $request->service_id)
                 ->where('equipment_id', $request->equipment_id)
+                ->where('area_id', $request->area_id)
+                ->where('substation_id', $request->substation_id)
                 ->first();
 
-            if (!$validService) {
-                return response()->json([
-                    'message' => 'Invalid Equipment + Service combination.'
-                ], 422);
+            if ($serviceArea) {
+                return $this->responseWithError('Service area already exists', 422, 'service area already exists');
             }
 
             // Create the service area entry
             ServiceArea::create([
                 'service_id' => $request->service_id,
+                'equipment_id' => $request->equipment_id,
                 'area_id' => $request->area_id,
-                'substation_id' => $request->substation_id
+                'substation_id' => $request->substation_id,
+                'is_enabled' => $request->is_enabled
             ]);
 
             return $this->responseWithSuccess([], 'Service area created successfully', 201);
@@ -177,6 +180,17 @@ class ServiceAreaController extends Controller
                 'is_enabled' => 'sometimes|boolean',
             ]);
 
+            $serviceArea = ServiceArea::where('service_id', $request->service_id)
+                ->where('equipment_id', $request->equipment_id)
+                ->where('area_id', $request->area_id)
+                ->where('substation_id', $request->substation_id)
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($serviceArea) {
+                return $this->responseWithError('Service area already exists', 422, 'service area already exists');
+            }
+            
             // Update only provided values
             $serviceArea->update($validated);
 
@@ -218,18 +232,18 @@ class ServiceAreaController extends Controller
         }
     }
 
-    public function checkServiceAvailability(Request $request)
-    {
-        $request->validate([
-            'village_id' => 'required|exists:villages,id',
-        ]);
+    // public function checkServiceAvailability(Request $request)
+    // {
+    //     $request->validate([
+    //         'village_id' => 'required|exists:villages,id',
+    //     ]);
 
-        $available = ServiceArea::where('village_id', $request->village_id)->exists();
+    //     $available = ServiceArea::where('village_id', $request->village_id)->exists();
 
-        if ($available) {
-            return $this->responseWithSuccess([], 'We are available in your village.', 200);
-        } else {
-            return $this->responseWithError('We re coming soon in this area', 401);
-        }
-    }
+    //     if ($available) {
+    //         return $this->responseWithSuccess([], 'We are available in your village.', 200);
+    //     } else {
+    //         return $this->responseWithError('We re coming soon in this area', 401);
+    //     }
+    // }
 }

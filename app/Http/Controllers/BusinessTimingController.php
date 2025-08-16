@@ -69,9 +69,8 @@ class BusinessTimingController extends Controller
             $timing = BusinessTiming::find($id);
             $timing->update($request->all());
             return $this->responseWithSuccess($timing, 'timing updated successfully', 200);
-        }
-        catch (\Illuminate\Validation\ValidationException $e){
-            return $this->responseWithError($e->getMessage(), 422); 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->responseWithError($e->getMessage(), 422);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -88,6 +87,24 @@ class BusinessTimingController extends Controller
             return $this->responseWithSuccess($timing, 'timing deleted successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+    public function applyToAll(Request $request)
+    {
+        try {
+            $request->validate([
+                'start_time' => 'required',
+                'end_time' => 'required'
+            ]);
+
+            BusinessTiming::query()->update([
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+            ]);
+
+            return $this->responseWithSuccess([], 'Timing applied to all days', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong', 500, $e->getMessage());
         }
     }
 }

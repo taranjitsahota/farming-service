@@ -25,7 +25,7 @@ class AreaController extends Controller
     public function index()
     {
         try {
-            $areas = Area::with(['state', 'district', 'tehsil', 'village','substation'])->get();
+            $areas = Area::with(['state', 'district', 'tehsil', 'village', 'substation'])->get();
 
             // Flatten the data
             $formatted = $areas->map(function ($area) {
@@ -92,6 +92,16 @@ class AreaController extends Controller
                 'pincode'   => 'nullable|string|max:10',
                 'is_enabled' => 'boolean'
             ]);
+
+            $exists = Area::where('state_id', $validated['state_id'])
+                ->where('district_id', $validated['district_id'])
+                ->where('tehsil_id', $validated['tehsil_id'])
+                ->where('village_id', $validated['village_id'])
+                ->first();
+
+            if ($exists) {
+                return $this->responseWithError('Area already exists', 409);
+            }
 
             $area = Area::create($validated);
 
@@ -160,15 +170,24 @@ class AreaController extends Controller
     public function update(Request $request, $id)
     {
         try {
-
-            $validated = $request->validate([
+            $request->validate([
                 'tehsil_id'   => 'sometimes|exists:tehsils,id',
                 'state_id'  => 'sometimes|exists:states,id',
                 'village_id'   => 'sometimes|exists:villages,id',
                 'substation_id'   => 'sometimes|exists:substations,id',
-                'pincode'   => 'nullable|string|max:10',
                 'is_enabled' => 'sometimes'
             ]);
+
+             $exists = Area::where('state_id', $request->state_id)
+                ->where('district_id', $request->district_id)
+                ->where('tehsil_id', $request->tehsil_id)
+                ->where('village_id', $request->village_id)
+                ->where('substation_id', $request->substation_id)
+                ->first();
+
+            if ($exists) {
+                return $this->responseWithError('Area already exists', 409);
+            }
 
             $area = Area::findOrFail($id);
             $area->update($request->all());

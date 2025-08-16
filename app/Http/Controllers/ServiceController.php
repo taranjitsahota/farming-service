@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Equipment;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -9,24 +10,20 @@ use Illuminate\Validation\ValidationException;
 class ServiceController extends Controller
 {
 
-    public function index(){
-        try{
-            $services = Service::with('equipment', 'substation')->get();
+    public function index()
+    {
+        try {
+            $services = Service::get();
 
             $formatted = $services->map(function ($service) {
                 return [
                     'id' => $service->id,
-                    'equipment_name' => $service->equipment->name,
-                    'equipment_id' => $service->equipment_id ?? null,
-                    'substation_name' => $service->substation->name ?? null,
-                    'substation_id' => $service->substation_id,
-                    'category' => $service->category,
+                    'name' => $service->name,
                     'is_enabled' => $service->is_enabled
                 ];
             });
 
             return $this->responseWithSuccess($formatted, 'Services fetched successfully', 200);
-
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -59,26 +56,22 @@ class ServiceController extends Controller
     {
         try {
             $validated = $request->validate([
-                'equipment_id' => 'required|exists:equipments,id',
-                'substation_id' => 'required|exists:substations,id',
-                'category' => 'required|string|max:255',
+                'name' => 'required|unique:services|string|max:255',
                 'is_enabled'    => 'boolean'
             ]);
 
             $service = Service::create($validated);
 
             return $this->responseWithSuccess($service, 'Service created successfully', 201);
-           
-
         } catch (ValidationException $e) {
-            return $this->responseWithError('Validation failed', 422, $e->errors());
-
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422, $e->errors());
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
-/**
+    /**
      * Display the specified service.
      * 
      * @OA\Get(
@@ -103,8 +96,6 @@ class ServiceController extends Controller
             $service = Service::findOrFail($id);
 
             return $this->responseWithSuccess($service, 'Service fetched successfully', 200);
-            
-
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -145,19 +136,17 @@ class ServiceController extends Controller
         try {
             $service = Service::findOrFail($id);
 
-            $validated = $request->validate([
-                // 'equipment_id' => 'required|exists:equipments,id',
-                // 'category' => 'required|string|max:255',
+            $request->validate([
+                'name' => 'sometimes|required|string|unique:services|max:255',
                 'is_enabled'    => 'required|boolean'
             ]);
 
             $service->update($request->all());
 
             return $this->responseWithSuccess($service, 'Service updated successfully', 200);
-
         } catch (ValidationException $e) {
-            return $this->responseWithError('Validation failed', 422, $e->errors());
-
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422, $e->errors());
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -189,22 +178,19 @@ class ServiceController extends Controller
             $service->delete();
 
             return $this->responseWithSuccess([], 'Service deleted successfully', 200);
-          
-
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
 
-   public function ServiceByEquipmentId($equipmentId)
+    public function EquipmentByServiceId($serviceId)
     {
         try {
-            $services = Service::where('equipment_id', $equipmentId)->get();
+            $equipments = Equipment::where('service_id', $serviceId)->get();
 
-            return $this->responseWithSuccess($services, 'Services fetched successfully', 200);
+            return $this->responseWithSuccess($equipments, 'Services fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-
 }
