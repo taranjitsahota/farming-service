@@ -33,32 +33,32 @@ class LocationController extends Controller
 
     public function getServicableVillages($tehsil_id)
     {
-        try{
-        $serviceableVillageIds = Area::whereIn(
-            'id',
-            ServiceArea::pluck('area_id')
-        )->pluck('village_id')->unique()->toArray();
+        try {
+            $serviceableVillageIds = Area::withoutGlobalScopes()->whereIn(
+                'id',
+                ServiceArea::withoutGlobalScopes()->pluck('area_id')
+            )->pluck('village_id')->unique()->toArray();
 
-        // Get villages in the Tehsil
-        $data = Village::select('id', 'name')
-            ->where('tehsil_id', $tehsil_id)
-            ->get()
-            ->map(function ($village) use ($serviceableVillageIds) {
-                $village->is_serviceable = in_array($village->id, $serviceableVillageIds);
-                return $village;
-            });
+            // Get villages in the Tehsil
+            $data = Village::select('id', 'name')
+                ->where('tehsil_id', $tehsil_id)
+                ->get()
+                ->map(function ($village) use ($serviceableVillageIds) {
+                    $village->is_serviceable = in_array($village->id, $serviceableVillageIds);
+                    return $village;
+                });
 
-        return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
-
-        }catch(\Exception $e){
+            return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-    public function getVillages($tehsil_id){
-        try{
-        $data = Village::select('id', 'name')->where('tehsil_id', $tehsil_id)->get();
-        return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
-        }catch(\Exception $e){
+    public function getVillages($tehsil_id)
+    {
+        try {
+            $data = Village::select('id', 'name')->where('tehsil_id', $tehsil_id)->get();
+            return $this->responseWithSuccess($data, 'Villages fetched successfully', 200);
+        } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }

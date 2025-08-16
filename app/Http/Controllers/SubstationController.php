@@ -60,10 +60,15 @@ class SubstationController extends Controller
     {
         try {
             $request->validate([
-                'name'       => ['sometimes', 'required', 'unique:substations,name', 'string', 'max:25'],
+                'name'       => ['sometimes', 'required', 'string', 'max:25'],
                 'is_enabled' => ['sometimes', 'required', 'boolean'],
             ]);
 
+            $exists = Substation::where('name', $request->name)->where('id', '!=', $id)->exists();
+            if ($exists) {
+                return $this->responseWithError('substation name already exists', 422);
+            }
+            
             $substation = Substation::find($id);
             $substation->update($request->all());
             return $this->responseWithSuccess($substation, 'substation updated successfully', 200);
