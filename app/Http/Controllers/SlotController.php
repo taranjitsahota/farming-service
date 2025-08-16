@@ -83,6 +83,8 @@ class SlotController extends Controller
             $service = Service::findOrFail($request->service_id);
 
             $equipment = Equipment::where('id', $request->equipment_id)
+                ->where('service_id', $service->id)
+                ->where('substation_id', $substationId)
                 ->first();
 
             if (!$equipment) {

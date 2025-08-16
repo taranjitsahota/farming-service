@@ -180,14 +180,14 @@ class ServiceAreaController extends Controller
                 'is_enabled' => 'sometimes|boolean',
             ]);
 
-            $serviceArea = ServiceArea::where('service_id', $request->service_id)
+            $exists = ServiceArea::where('service_id', $request->service_id)
                 ->where('equipment_id', $request->equipment_id)
                 ->where('area_id', $request->area_id)
                 ->where('substation_id', $request->substation_id)
                 ->where('id', '!=', $id)
                 ->first();
 
-            if ($serviceArea) {
+            if ($exists) {
                 return $this->responseWithError('Service area already exists', 422, 'service area already exists');
             }
             
