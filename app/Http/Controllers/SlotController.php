@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\BusinessTiming;
+use App\Models\Equipment;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -69,6 +70,7 @@ class SlotController extends Controller
             $request->validate([
                 'date' => 'required|date',
                 'service_id' => 'required|exists:services,id',
+                'equipment_id' => 'required|exists:equipments,id',
                 'area' => 'required|numeric|min:1',
                 'substation_id' => 'required|exists:substations,id'
             ]);
@@ -78,13 +80,10 @@ class SlotController extends Controller
             $area = $request->area;
             $substationId = $request->substation_id;
 
-            $service = Service::with('equipment')
-                ->whereHas('equipment', function ($q) use ($substationId) {
-                    $q->where('substation_id', $substationId);
-                })
-                ->findOrFail($request->service_id);
+            $service = Service::findOrFail($request->service_id);
 
-            $equipment = $service->equipment;
+            $equipment = Equipment::where('id', $request->equipment_id)
+                ->first();
 
             if (!$equipment) {
                 return $this->responseWithError('No equipment linked to this service in the given substation', 422);
