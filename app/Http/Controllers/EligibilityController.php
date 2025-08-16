@@ -44,7 +44,7 @@ class EligibilityController extends Controller
             ]);
 
             // Find the area for this village
-            $area = Area::where('village_id', $request->village)
+            $area = Area::withoutGlobalScopes()->where('village_id', $request->village)
                 ->where('is_enabled', true)
                 ->first();
 
