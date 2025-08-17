@@ -36,7 +36,7 @@ class LocationController extends Controller
         try {
             $serviceableVillageIds = Area::withoutGlobalScopes()->whereIn(
                 'id',
-                ServiceArea::withoutGlobalScopes()->pluck('area_id')
+                ServiceArea::withoutGlobalScopes()->where('is_enabled', true)->pluck('area_id')
             )->pluck('village_id')->unique()->toArray();
 
             // Get villages in the Tehsil

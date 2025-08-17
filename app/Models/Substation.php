@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -44,4 +45,10 @@ class Substation extends Model
     {
         return $this->hasMany(User::class);
     }
+    
+    protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
+    }
+
 }

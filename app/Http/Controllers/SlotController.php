@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\BusinessTiming;
 use App\Models\Equipment;
 use App\Models\Service;
+use App\Models\ServiceArea;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -69,8 +70,10 @@ class SlotController extends Controller
         try {
             $request->validate([
                 'date' => 'required|date',
-                'service_id' => 'required|exists:services,id',
                 'equipment_id' => 'required|exists:equipments,id',
+                'service_id' => 'required|exists:services,id',
+                'service_area_id' => 'required|exists:serviceareas,id',
+                // 'area_id' => 'required|exists:areas,id',
                 'area' => 'required|numeric|min:1',
                 'substation_id' => 'required|exists:substations,id'
             ]);
@@ -78,14 +81,21 @@ class SlotController extends Controller
             $date = Carbon::parse($request->date)->startOfDay();
             $dayOfWeek = $date->format('l');
             $area = $request->area;
-            $substationId = $request->substation_id;
+            // $substationId = $request->substation_id;
 
-            $service = Service::findOrFail($request->service_id);
+            // $serviceArea = ServiceArea::where('service_id', $request->service_id)
+            //     // ->where('area_id', $request->area_id)
+            //     ->where('equipment_id', $request->equipment_id)
+            //     ->where('substation_id', $substationId)
+            //     ->first();
+            $serviceAreaId = $request->service_area_id;
+            // dd($serviceAreaId);
+            // if (!$serviceAreaId) {
+            //     return $this->responseWithError('No service area link found for this service, equipment, and substation', 422);
+            // }
 
-            $equipment = Equipment::where('id', $request->equipment_id)
-                ->where('service_id', $service->id)
-                ->where('substation_id', $substationId)
-                ->first();
+            $equipment = Equipment::findOrFail($request->equipment_id);
+
 
             if (!$equipment) {
                 return $this->responseWithError('No equipment linked to this service in the given substation', 422);
@@ -147,12 +157,11 @@ class SlotController extends Controller
 
             // Get bookings for the selected day
             $bookings = Booking::where('slot_date', $requestedDate)
-                ->where('service_id', $service->id)
-                ->where('substation_id', $substationId)
+                ->where('service_area_id', $serviceAreaId)
                 ->where(function ($q) {
-                    $q->where('booking_status', 'confirmed')
+                    $q->where('payment_status', 'confirmed')
                         ->orWhere(function ($q2) {
-                            $q2->where('booking_status', 'pending')
+                            $q2->where('payment_status', 'pending')
                                 ->where('reserved_until', '>', now());
                         });
                 })
@@ -206,6 +215,7 @@ class SlotController extends Controller
                         'start_time' => $current_start->format('H:i'),
                         'end_time' => $slot_end->format('H:i'),
                         'duration_required_minutes' => $total_minutes,
+                        'service_area_id' => $serviceAreaId
                     ];
                 }
 

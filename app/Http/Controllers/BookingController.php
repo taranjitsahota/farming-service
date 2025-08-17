@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BusinessTiming;
 use App\Models\Service;
+use App\Models\ServiceArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Traits\Subscriptions\isSubscribed;
@@ -23,7 +24,7 @@ class BookingController extends Controller
         try {
             $user = auth()->user();
             $bookings = Booking::where('user_id', $user->id)
-                ->with(['service', 'user', 'crop', 'servicearea'])
+                ->with(['user', 'crop', 'servicearea'])
                 ->get();
 
             return $this->responseWithSuccess($bookings, 'Bookings fetched successfully', 200);
@@ -65,8 +66,8 @@ class BookingController extends Controller
     public function getAllBookings()
     {
         try {
-            $bookings = Booking::with('service')->with('user')->with('crop')->with('service')->with('service.equipment')->with('servicearea')->get();
-            // dd($bookings);
+            $bookings = Booking::with('user')->with('crop')->with('servicearea')->with('servicearea.equipment')->get();
+
             $formatted = $bookings->map(function ($booking) {
                 return [
                     'id' => $booking->id,
@@ -74,11 +75,10 @@ class BookingController extends Controller
                     'user_name' => $booking->user->name,
                     'phone' => $booking->user->phone,
                     'address' => $booking->address,
-                    'equipment' => $booking->equipment,
+                    'equipment' => $booking->servicearea->equipment,
                     'crop_id' => $booking->crop_id,
                     'crop_name' => $booking->crop->name,
-                    'service_id' => $booking->service_id,
-                    'equipment_name' => $booking->service->equipment->name,
+                    'equipment_name' => $booking->servicearea->equipment->name,
                     'servicearea_id' => $booking->servicearea_id,
                     // 'servicearea_name' => $booking->servicearea->name,
                     'date' => $booking->slot_date,
@@ -106,7 +106,7 @@ class BookingController extends Controller
     public function getPendingBookings()
     {
         try {
-            $bookings = Booking::where('booking_status', 'pending')->with('service')->with('service.equipment')->with('user')->with('crop')->with('service')->with('servicearea')->get();
+            $bookings = Booking::where('booking_status', 'pending')->with('servicearea')->with('servicearea.equipment')->with('user')->with('crop')->get();
 
             $formatted = $bookings->map(function ($booking) {
                 return [
@@ -117,14 +117,12 @@ class BookingController extends Controller
                     'pin_code' => $booking->user->userInfo->pin_code ?? '',
                     'address' => $booking->address,
                     'land_area' => $booking->land_area,
-                    'equipment' => $booking->equipment,
+                    'equipment' => $booking->servicearea->equipment,
                     'user_note' => $booking->user_note,
                     'crop_id' => $booking->crop_id,
                     'crop_name' => $booking->crop->name,
-                    'service_id' => $booking->service_id,
-                    'equipment_name' => $booking->service->equipment->name,
+                    'equipment_name' => $booking->servicearea->equipment->name,
                     'servicearea_id' => $booking->servicearea_id,
-                    'service_name' => $booking->service->category,
                     'date' => $booking->slot_date,
                     'start_time' => $booking->start_time,
                     'end_time' => $booking->end_time,
@@ -179,7 +177,6 @@ class BookingController extends Controller
         try {
             DB::beginTransaction();
             $request->validate([
-                'service_id' => 'required|exists:services,id',
                 'slot_date' => 'required|date',
                 'start_time' => 'required',
                 'area' => 'required|numeric|min:1',
@@ -190,27 +187,38 @@ class BookingController extends Controller
 
             $user = auth()->user();
 
-
-            $service = Service::with('equipment')->findOrFail($request->service_id);
-            $equipment = $service->equipment;
+            $serviceArea = ServiceArea::findOrFail($request->service_area_id);
+            $equipment = $serviceArea->equipment;
 
             if ($equipment->min_kanal && $request->area < $equipment->min_kanal) {
                 return $this->responseWithError('Minimum area is ' . $equipment->min_kanal . ' kanals', 422);
             }
 
-            // $alreadyPending = Booking::where('user_id', $user->id)
-            //     ->where('service_area_id', $request->service_area_id)
-            //     ->where('substation_id', $request->substation_id)
-            //     ->where('payment_status', 'pending')
-            //     ->where('reserved_until', '>', now())
-            //     ->exists();
+            $alreadyPending = Booking::where('user_id', $user->id)
+                ->where('service_area_id', $request->service_area_id)
+                ->where('substation_id', $request->substation_id)
+                ->where('payment_status', 'pending')
+                ->where('reserved_until', '>', now())
+                ->exists();
 
-            // if ($alreadyPending) {
-            //     return $this->responseWithError('You already have a pending booking. Please complete payment.', 422);
-            // }
+            if ($alreadyPending) {
+                return $this->responseWithError('You already have a pending booking. Please complete payment. Or cancel the wait for 5 minutes.', 422);
+            }
+
+            $conflictBooking = Booking::where('service_area_id', $request->service_area_id)
+                ->where('substation_id', $request->substation_id)
+                ->where('slot_date', $request->slot_date)
+                ->where(function ($q) use ($request) {
+                    $q->whereBetween('start_time', [$request->start_time, $request->end_time])
+                        ->orWhereBetween('end_time', [$request->start_time, $request->end_time]);
+                })
+                ->exists();
+
+            if ($conflictBooking) {
+                return $this->responseWithError('This Slot is already Booked. Please choose another slot.', 422);
+            };
 
             $price = $equipment->price_per_kanal * $request->area;
-            // dd($price);
             $area = $request->area;
             $duration = $area * $equipment->minutes_per_kanal;
             $start = Carbon::parse($request->slot_date . ' ' . $request->start_time);
@@ -261,7 +269,6 @@ class BookingController extends Controller
 
             $booking = Booking::create([
                 'user_id' => $user->id,
-                'service_id' => $request->service_id,
                 'substation_id' => $request->substation_id,
                 'crop_id' => $request->crop_id,
                 'area_id' => $request->area_id,

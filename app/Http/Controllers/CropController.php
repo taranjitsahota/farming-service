@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Crop;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CropController extends Controller
 {
@@ -28,13 +29,17 @@ class CropController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required',
+                'name' => 'required|unique:crops,name',
                 'is_enabled' => 'required',
             ]);
 
             $crop = Crop::create($request->all());
             return $this->responseWithSuccess($crop, 'crop created successfully', 200);
-        } catch (\Exception $e) {
+        } catch(ValidationException $e){
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422, $e->validator->errors());
+        }
+            catch (\Exception $e) {
             return $this->responseWithError($e->getMessage(), 422, 'crop not found');
         }
     }
@@ -60,11 +65,16 @@ class CropController extends Controller
 
         try {
             $request->validate([
-                // 'name' => 'required',
+                'name' => 'sometimes|required',
                 'is_enabled' => 'required',
             ]);
 
             $crop = Crop::findOrFail($id);
+            $existingCrop = Crop::where('name', $request->name)->where('id', '!=', $id)->first();
+
+            if ($existingCrop) {
+                return $this->responseWithError('Crop name already exists', 422, 'Crop name already exists');
+            }
             $crop->update($request->all());
             return $this->responseWithSuccess($crop, 'crop updated successfully', 200);
         } catch (\Exception $e) {

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Booking extends Model
 {
     use HasFactory;
-    protected $fillable = ['id', 'user_id', 'substation_id' ,'driver_id', 'price','booking_status','payment_status','user_note','admin_note','payment_method', 'payment_id','address','longitude', 'latitude', 'reserved_until', 'paid_at', 'service_id', 'slot_date', 'start_time',"crop_id","service_area_id",'land_area', 'end_time','duration','created_at', 'updated_at'];
+    protected $fillable = ['id', 'user_id', 'substation_id' ,'driver_id', 'price','booking_status','payment_status','user_note','admin_note','payment_method', 'payment_id','address','longitude', 'latitude', 'reserved_until', 'paid_at', 'slot_date', 'start_time',"crop_id","service_area_id",'land_area', 'end_time','duration','created_at', 'updated_at'];
 
      protected static function booted()
     {
@@ -19,12 +19,6 @@ class Booking extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    // Relationship with Service
-    public function service()
-    {
-        return $this->belongsTo(Service::class);
     }
 
     // Relationship with Crop

@@ -182,15 +182,4 @@ class ServiceController extends Controller
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-
-    public function EquipmentByServiceId($serviceId)
-    {
-        try {
-            $equipments = Equipment::where('service_id', $serviceId)->get();
-
-            return $this->responseWithSuccess($equipments, 'Services fetched successfully', 200);
-        } catch (\Exception $e) {
-            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
-        }
-    }
 }

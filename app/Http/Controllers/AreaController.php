@@ -227,4 +227,31 @@ class AreaController extends Controller
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
+
+    public function areaBySubstationId($substation_id)
+    {
+        try {
+            $area = Area::with(['state', 'district', 'tehsil', 'village', 'substation'])->where('substation_id', $substation_id)->get();
+            $formatted = $area->map(function ($area) {
+                return [
+                    'id'           => $area->id,
+                    'village_id'   => $area->village_id,
+                    'village_name' => $area->village?->name ?? null,
+                    'tehsil_id'      => $area->tehsil_id,
+                    'tehsil_name'    => $area->tehsil?->name ?? null,
+                    'district_id'    => $area->district_id,
+                    'district_name'  => $area->district?->name ?? null,
+                    'state_id'     => $area->state_id,
+                    'state_name'   => $area->state?->name ?? null,
+                    'substation_id' => $area->substation_id ?? null,
+                    'substation_name' => $area->substation?->name ?? null,
+                    'pincode'      => $area->pincode,
+                    'is_enabled'   => $area->is_enabled,
+                ];
+            });
+            return $this->responseWithSuccess($formatted, 'Area fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
 }

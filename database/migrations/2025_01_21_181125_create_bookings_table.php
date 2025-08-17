@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('substation_id')->nullable();
             $table->unsignedBigInteger('user_id');
-            $table->foreignId('service_id');
             $table->unsignedBigInteger('crop_id');
             $table->unsignedBigInteger('service_area_id');
             $table->integer('driver_id')->nullable();
@@ -46,7 +45,6 @@ return new class extends Migration
             $table->foreign('substation_id')->references('id')->on('substations')->onDelete('set null');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('crop_id')->references('id')->on('crops')->onDelete('cascade');
-            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('service_area_id')->references('id')->on('serviceareas')->onDelete('cascade');
         });
     }

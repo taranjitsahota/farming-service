@@ -77,8 +77,8 @@ class AuthController extends Controller
                 return $this->responseWithError('User registration failed!', 500);
             }
         } catch (\Illuminate\Validation\ValidationException $th) {
-
-            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
+            $firstError = $th->validator->errors()->first();
+            return $this->responseWithError($firstError, 422, $th->validator->errors());
         } catch (\Exception $e) {
 
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
@@ -160,7 +160,8 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'profile_photo_url' => $user->profile_photo_url
+                    'profile_photo_url' => $user->profile_photo_url,
+                    'substation_id' => $user->substation_id ?? null
                 ];
 
                 return $this->responseWithSuccess($data, 'Logged in successfully', 200);
@@ -168,7 +169,8 @@ class AuthController extends Controller
 
             return $this->responseWithError('Invalid credentials', 401, []);
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
+            $firstError = collect($th->validator->errors()->all())->first();
+            return $this->responseWithError($firstError, 422, $th->validator->errors());
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

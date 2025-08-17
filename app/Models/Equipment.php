@@ -24,7 +24,7 @@ class Equipment extends Model
         'is_enabled',
     ];
 
-     protected static function booted()
+    protected static function booted()
     {
         static::addGlobalScope(new ServiceRoleScope);
     }
@@ -36,5 +36,9 @@ class Equipment extends Model
     public function substation()
     {
         return $this->belongsTo(Substation::class);
+    }
+    public function serviceArea()
+    {
+        return $this->hasMany(ServiceArea::class);
     }
 }

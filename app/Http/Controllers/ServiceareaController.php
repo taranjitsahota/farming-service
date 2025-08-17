@@ -176,6 +176,7 @@ class ServiceAreaController extends Controller
             $validated = $request->validate([
                 'service_id' => 'sometimes|exists:services,id',
                 'substation_id' => 'sometimes|exists:substations,id',
+                'equipment_id' => 'sometimes|exists:equipments,id',
                 'area_id'    => 'sometimes|exists:areas,id',
                 'is_enabled' => 'sometimes|boolean',
             ]);

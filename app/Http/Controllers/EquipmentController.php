@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Area;
 use App\Models\Equipment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -31,8 +32,6 @@ class EquipmentController extends Controller
                     'min_kanal' => $equipment->min_kanal,
                     'minutes_per_kanal' => $equipment->minutes_per_kanal,
                     'inventory' => $equipment->inventory
-
-
                 ];
             });
 
@@ -172,6 +171,96 @@ class EquipmentController extends Controller
             return $this->responseWithSuccess(null, 'equipment deleted successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError($e->getMessage(), 'equipment not found', 404);
+        }
+    }
+    public function EquipmentByServiceId($serviceId, $substationId)
+    {
+        try {
+            $equipments = Equipment::with('substation')->where('service_id', $serviceId)->where('is_enabled', true)->where('substation_id', $substationId)->select('id', 'name', 'substation_id', 'service_id')->get();
+            $formatter = $equipments->map(function ($equipment) {
+                return [
+                    'id' => $equipment->id,
+                    'name' => $equipment->name,
+                    // 'price_per_kanal' => $equipment->price_per_kanal,
+                    // 'min_kanal' => $equipment->min_kanal,
+                    'substation_name' => $equipment->substation->name,
+                    'substation_id' => $equipment->substation_id,
+                    'service_id' => $equipment->service_id,
+                    // 'is_enabled' => $equipment->is_enabled,
+                    // 'minutes_per_kanal' => $equipment->minutes_per_kanal,
+                    // 'inventory' => $equipment->inventory,
+                    // 'image' => $equipment->image,
+                ];
+            });
+
+            return $this->responseWithSuccess($formatter, 'Equipments fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+    public function getEquipmentByVillage(Request $request)
+    {
+        try {
+            $request->validate([
+                'village_id' => 'required|exists:villages,id|integer',
+            ]);
+
+            // 1. Get the area for this village
+            $area = Area::withoutGlobalScopes()
+                ->where('village_id', $request->village_id)
+                ->where('is_enabled', true)
+                ->first();
+
+            if (!$area) {
+                return $this->responseWithSuccess(
+                    ['available' => false, 'equipments' => []],
+                    'Service not available in this area',
+                    200
+                );
+            }
+
+            // 2. Get equipment via ServiceAreas for this Area
+            $equipment = Equipment::whereHas('serviceArea', function ($query) use ($area) {
+                $query->where('area_id', $area->id)
+                    ->where('is_enabled', true);
+            })
+                ->with('substation', 'service')
+                ->get();
+
+            if ($equipment->isEmpty()) {
+                return $this->responseWithSuccess(
+                    ['available' => true, 'equipments' => []],
+                    'No equipment available in this area',
+                    200
+                );
+            }
+
+            // 3. Format response
+            $formatter = $equipment->map(function ($eq) {
+                return [
+                    'id'              => $eq->id,
+                    'name'            => $eq->name,
+                    'substation_id'   => $eq->substation->id ?? null,
+                    'substation_name' => $eq->substation->name ?? null,
+                    'service_id'      => $eq->service_id,
+                    'service_name'    => $eq->service->name ?? null,
+                    'is_enabled'      => $eq->is_enabled,
+                    'image'           => $eq->image,
+                    'price_per_kanal' => $eq->price_per_kanal,
+                    'min_kanal'       => $eq->min_kanal,
+                    'minutes_per_kanal' => $eq->minutes_per_kanal,
+                    'inventory'       => $eq->inventory,
+                    'service_area_id' => $eq->serviceArea->first()->id
+                ];
+            });
+
+            return $this->responseWithSuccess(
+                ['available' => true, 'equipments' => $formatter],
+                'Equipment fetched successfully',
+                200
+            );
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 500, 'Unexpected error occurred');
         }
     }
 }

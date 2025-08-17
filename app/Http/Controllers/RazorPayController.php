@@ -8,6 +8,7 @@ use Razorpay\Api\Api;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\BookingConfirmationMail;
+use App\Models\ServiceArea;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -17,12 +18,13 @@ class RazorPayController extends Controller
     public function createRazorpayOrder(Request $request)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
+            'service_area_id' => 'required|exists:serviceareas,id',
+            'substation_id' => 'required|exists:substations,id',
             'area' => 'required|numeric|min:1'
         ]);
 
-        $service = Service::with('equipment')->findOrFail($request->service_id);
-        $equipment = $service->equipment;
+        $serviceArea = ServiceArea::findOrFail($request->service_area_id);
+        $equipment = $serviceArea->equipment;
         $area = $request->area;
 
         if ($equipment->min_kanal && $area < $equipment->min_kanal) {
@@ -30,14 +32,12 @@ class RazorPayController extends Controller
         }
 
         $amount = $area * $equipment->price_per_kanal;
-
+        
         if (!$amount) {
             return $this->responseWithError('Invalid amount', 422);
         }
 
         $amountinpaise = $amount * 100;
-
-
 
         $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
@@ -63,9 +63,9 @@ class RazorPayController extends Controller
         $request->validate([
             'razorpay_payment_id' => 'required',
             'razorpay_order_id' => 'required',
-            'booking_id' => 'required|exists:bookings,id'
+            'booking_id' => 'required|exists:bookings,id',
+            'substation_id' => 'required|exists:substations,id'
         ]);
-
         try {
             $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
             $payment = $api->payment->fetch($request->razorpay_payment_id);
@@ -100,7 +100,6 @@ class RazorPayController extends Controller
 
                 $booking->update([
                     'payment_status' => 'confirmed',
-                    'booking_status' => 'completed',
                     'payment_id' => $request->razorpay_payment_id,
                     'payment_method' => 'razorpay',
                     'paid_at' => now()

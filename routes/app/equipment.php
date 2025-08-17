@@ -7,5 +7,6 @@ use Aws\Middleware;
 Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:user')->group(function () {
         Route::apiResource('equipments', EquipmentController::class);
+        Route::get('/get-equipment-by-village', [EquipmentController::class, 'getEquipmentByVillage']);
     });
 });

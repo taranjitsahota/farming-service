@@ -38,42 +38,67 @@ class EligibilityController extends Controller
         try {
             $request->validate([
                 'state_id'   => 'required|exists:states,id|integer',
-                'tehsil_id'    => 'required|exists:tehsils,id|integer',
+                'tehsil_id'  => 'required|exists:tehsils,id|integer',
                 'district_id' => 'required|exists:districts,id|integer',
-                'village' => 'required|exists:villages,id|integer',
+                'village'    => 'required|exists:villages,id|integer',
             ]);
 
             // Find the area for this village
-            $area = Area::withoutGlobalScopes()->where('village_id', $request->village)
-                ->where('is_enabled', true)
+            $area = Area::withoutGlobalScopes()
+                ->where('village_id', $request->village)
                 ->first();
 
             if (!$area) {
+                // still track interested users
                 app(InterestedUsers::class)->createInterestedUser(
                     $request->user(),
                     [
-                        'state_id' => $request->state_id,
+                        'state_id'   => $request->state_id,
                         'district_id' => $request->district_id,
-                        'tehsil_id' => $request->tehsil_id,
-                        'village_id' => $request->village
+                        'tehsil_id'  => $request->tehsil_id,
+                        'village_id' => $request->village,
                     ]
                 );
-                return $this->responseWithError('Service not available in this area', 401);
+
+                return $this->responseWithSuccess(
+                    ['available' => false],
+                    'Service not available in this area',
+                    200
+                );
             }
 
-            // Get substation_id from serviceArea
-            $substationId = $area->substation_id;
+            $serviceArea = ServiceArea::withoutGlobalScopes()
+                ->where('area_id', $area->id)
+                ->where('is_enabled', true)
+                ->first();
+
+            if (!$serviceArea) {
+                app(InterestedUsers::class)->createInterestedUser(
+                    $request->user(),
+                    [
+                        'state_id'   => $request->state_id,
+                        'district_id' => $request->district_id,
+                        'tehsil_id'  => $request->tehsil_id,
+                        'village_id' => $request->village,
+                    ]
+                );
+
+                return $this->responseWithSuccess(
+                    ['available' => false],
+                    'Service not available in this area',
+                    200
+                );
+            }
 
             $data = [
-                'substation_id' => $substationId,
-                'available' => true
+                'available'     => true,
+                'substation_id' => $serviceArea->substation_id,
+                'area_id'       => $serviceArea->area_id
             ];
 
             return $this->responseWithSuccess($data, 'Service availability checked successfully', 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
-            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+            return $this->responseWithError($e->getMessage(), 500, 'Unexpected error occurred');
         }
     }
 }

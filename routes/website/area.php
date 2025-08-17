@@ -7,5 +7,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::middleware('role:superadmin,admin')->group(function () {
         Route::apiResource('areas', AreaController::class);
+        Route::get('/area-by-substation-id/{substationId}', [AreaController::class, 'areaBySubstationId']);
     });
 });
