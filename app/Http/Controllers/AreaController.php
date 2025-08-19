@@ -42,7 +42,7 @@ class AreaController extends Controller
                     'substation_id' => $area->substation_id ?? null,
                     'substation_name' => $area->substation?->name ?? null,
                     'pincode'      => $area->pincode,
-                    'is_enabled'   => $area->is_enabled,
+                    // 'is_enabled'   => $area->is_enabled,
                 ];
             });
 
@@ -90,7 +90,7 @@ class AreaController extends Controller
                 'village_id'   => 'required|exists:villages,id',
                 'substation_id'   => 'nullable|exists:substations,id',
                 'pincode'   => 'nullable|string|max:10',
-                'is_enabled' => 'boolean'
+                // 'is_enabled' => 'boolean'
             ]);
 
             $exists = Area::where('state_id', $validated['state_id'])
@@ -175,7 +175,7 @@ class AreaController extends Controller
                 'state_id'  => 'sometimes|exists:states,id',
                 'village_id'   => 'sometimes|exists:villages,id',
                 'substation_id'   => 'sometimes|exists:substations,id',
-                'is_enabled' => 'sometimes'
+                // 'is_enabled' => 'sometimes'
             ]);
 
              $exists = Area::where('state_id', $request->state_id)
@@ -246,7 +246,7 @@ class AreaController extends Controller
                     'substation_id' => $area->substation_id ?? null,
                     'substation_name' => $area->substation?->name ?? null,
                     'pincode'      => $area->pincode,
-                    'is_enabled'   => $area->is_enabled,
+                    // 'is_enabled'   => $area->is_enabled,
                 ];
             });
             return $this->responseWithSuccess($formatted, 'Area fetched successfully', 200);

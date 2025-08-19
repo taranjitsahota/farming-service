@@ -19,7 +19,7 @@ class ServiceController extends Controller
                 return [
                     'id' => $service->id,
                     'name' => $service->name,
-                    'is_enabled' => $service->is_enabled
+                    // 'is_enabled' => $service->is_enabled
                 ];
             });
 
@@ -57,7 +57,7 @@ class ServiceController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|unique:services|string|max:255',
-                'is_enabled'    => 'boolean'
+                // 'is_enabled'    => 'boolean'
             ]);
 
             $service = Service::create($validated);
@@ -138,7 +138,7 @@ class ServiceController extends Controller
 
             $request->validate([
                 'name' => 'sometimes|required|string|unique:services|max:255',
-                'is_enabled'    => 'required|boolean'
+                // 'is_enabled'    => 'required|boolean'
             ]);
 
             $service->update($request->all());

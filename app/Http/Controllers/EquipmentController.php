@@ -26,7 +26,7 @@ class EquipmentController extends Controller
                     'substation_id' => $equipment->substation->id,
                     'service_id' => $equipment->service_id,
                     'service_name' => $equipment->service->name,
-                    'is_enabled' => $equipment->is_enabled,
+                    // 'is_enabled' => $equipment->is_enabled,
                     'image' => $equipment->image,
                     'price_per_kanal' => $equipment->price_per_kanal,
                     'min_kanal' => $equipment->min_kanal,
@@ -53,7 +53,7 @@ class EquipmentController extends Controller
                 'service_id' => 'required|exists:services,id',
                 'price_per_kanal' => 'required|numeric',
                 'min_kanal' => 'required|integer',
-                'is_enabled' => 'required|boolean',
+                // 'is_enabled' => 'required|boolean',
                 'minutes_per_kanal' => 'required|integer',
                 'inventory' => 'required|integer',
                 'image' => 'required|file|mimes:jpg,jpeg,png|max:2048',
@@ -77,7 +77,7 @@ class EquipmentController extends Controller
                 'service_name' => $request->service_name,
                 'price_per_kanal' => $request->price_per_kanal,
                 'min_kanal' => $request->min_kanal,
-                'is_enabled' => $request->is_enabled,
+                // 'is_enabled' => $request->is_enabled,
                 'minutes_per_kanal' => $request->minutes_per_kanal,
                 'inventory' => $request->inventory,
                 'image' => $url,
@@ -117,7 +117,7 @@ class EquipmentController extends Controller
                 'min_kanal' => 'sometimes|required|integer',
                 'substation_id' => 'sometimes|required|exists:substations,id',
                 'service_id' => 'sometimes|required|exists:services,id',
-                'is_enabled' => 'required',
+                // 'is_enabled' => 'required',
                 'minutes_per_kanal' => 'sometimes|required|integer',
                 'inventory' => 'sometimes|required|integer',
                 'image' => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
@@ -176,7 +176,9 @@ class EquipmentController extends Controller
     public function EquipmentByServiceId($serviceId, $substationId)
     {
         try {
-            $equipments = Equipment::with('substation')->where('service_id', $serviceId)->where('is_enabled', true)->where('substation_id', $substationId)->select('id', 'name', 'substation_id', 'service_id')->get();
+            $equipments = Equipment::with('substation')->where('service_id', $serviceId)
+            // ->where('is_enabled', true)
+            ->where('substation_id', $substationId)->select('id', 'name', 'substation_id', 'service_id')->get();
             $formatter = $equipments->map(function ($equipment) {
                 return [
                     'id' => $equipment->id,
@@ -208,7 +210,7 @@ class EquipmentController extends Controller
             // 1. Get the area for this village
             $area = Area::withoutGlobalScopes()
                 ->where('village_id', $request->village_id)
-                ->where('is_enabled', true)
+                // ->where('is_enabled', true)
                 ->first();
 
             if (!$area) {
@@ -221,8 +223,8 @@ class EquipmentController extends Controller
 
             // 2. Get equipment via ServiceAreas for this Area
             $equipment = Equipment::whereHas('serviceArea', function ($query) use ($area) {
-                $query->where('area_id', $area->id)
-                    ->where('is_enabled', true);
+                $query->where('area_id', $area->id);
+                    // ->where('is_enabled', true);
             })
                 ->with('substation', 'service')
                 ->get();
@@ -244,7 +246,7 @@ class EquipmentController extends Controller
                     'substation_name' => $eq->substation->name ?? null,
                     'service_id'      => $eq->service_id,
                     'service_name'    => $eq->service->name ?? null,
-                    'is_enabled'      => $eq->is_enabled,
+                    // 'is_enabled'      => $eq->is_enabled,
                     'image'           => $eq->image,
                     'price_per_kanal' => $eq->price_per_kanal,
                     'min_kanal'       => $eq->min_kanal,

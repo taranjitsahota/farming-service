@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('district_id');
             $table->unsignedBigInteger('tehsil_id');
             $table->unsignedBigInteger('village_id');
-            $table->boolean('is_enabled')->default(true);
+            // $table->boolean('is_enabled')->default(true);
             $table->string('pincode')->nullable();
             $table->softDeletes();
             $table->timestamps();
