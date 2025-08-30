@@ -15,8 +15,18 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $user = User::where('role', 'user')->get();
-            return $this->responseWithSuccess($user, 'user fetched successfully', 200);
+            $user = User::role('farmer')->get();
+            $formatter = $user->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'role' => $user->getRoleNames(),
+                    
+                ];
+            });
+            return $this->responseWithSuccess($formatter, 'user fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -40,9 +50,10 @@ class UserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'phone' => $request->phone,
-                'role' => $request->role,
                 'is_verified' => true
             ]);
+
+            $user->assignRole('farmer');
 
             return $this->responseWithSuccess($user, 'User registered successfully', 201);
         } catch(\Illuminate\Validation\ValidationException $e){
@@ -105,14 +116,14 @@ class UserController extends Controller
     public function adminList()
     {
         try {
-            $user = User::where('role', 'admin')->with('substation')->get();
+            $user = User::role('admin')->with('substation')->get();
             $formatter = $user->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
-                    'role' => $user->role,
+                    'role' => $user->getRoleNames(),
                     'substation' => $user->substation ? $user->substation->name : null,
                     'substation_id' => $user->substation ? $user->substation->id : null
                 ];
@@ -123,22 +134,22 @@ class UserController extends Controller
         }
     }
 
-    public function driverList()
+    public function partnerList()
     {
         try{
-            $user = User::where('role', 'driver')->with('substation')->get();
+            $user = User::role('partner')->with('substation')->get();
             $formatter = $user->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
-                    'role' => $user->role,
+                    'role' => $user->getRoleNames(),
                     'substation' => $user->substation ? $user->substation->name : null,
                     'substation_id' => $user->substation ? $user->substation->id : null
                 ];
             });
-            return $this->responseWithSuccess($formatter, 'Driver fetched successfully', 200);
+            return $this->responseWithSuccess($formatter, 'Partner fetched successfully', 200);
         }catch(\Exception $e){
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Area;
+use App\Models\PartnerAreaCoverage;
 use App\Models\ServiceArea;
 use App\Services\InterestedUsers\InterestedUsers;
 use Illuminate\Http\Request;
@@ -67,7 +68,7 @@ class EligibilityController extends Controller
                 );
             }
 
-            $serviceArea = ServiceArea::withoutGlobalScopes()
+            $serviceArea = PartnerAreaCoverage::withoutGlobalScopes()
                 ->where('area_id', $area->id)
                 ->where('is_enabled', true)
                 ->first();
@@ -92,7 +93,7 @@ class EligibilityController extends Controller
 
             $data = [
                 'available'     => true,
-                'substation_id' => $serviceArea->substation_id,
+                'substation_id' => $area->substation_id,
                 'area_id'       => $serviceArea->area_id
             ];
 

@@ -16,8 +16,9 @@ class DashboardController extends Controller
             $bookings = Booking::where('booking_status', 'completed')->count();
             $subscriptions = Subscription::where('status', 'active')->count();
             $revenue = Booking::where('booking_status', 'completed')->sum('price');
-            $drivers = User::where('role', 'driver')->count();
-            $farmers = User::where('role', 'user')->count();
+            $partners = User::role('partner')->count();
+            $farmers  = User::role('farmer')->count();
+            $drivers = User::role('driver')->count();
 
             // Example top revenue locations
             // $locations = Booking::select('location', DB::raw('SUM(price) as total'))
@@ -32,7 +33,7 @@ class DashboardController extends Controller
             //         ];
             //     });
 
-            $data = compact('bookings', 'revenue', 'subscriptions', 'drivers', 'farmers');
+            $data = compact('bookings', 'revenue', 'subscriptions', 'partners', 'farmers', 'drivers');
 
             return $this->responseWithSuccess($data, 'Dashboard metrics fetched successfully', 200);
         } catch (\Exception $e) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Models\District;
+use App\Models\PartnerAreaCoverage;
 use Illuminate\Http\Request;
 use App\Models\State;
 use App\Models\Tehsil;
@@ -36,7 +37,7 @@ class LocationController extends Controller
         try {
             $serviceableVillageIds = Area::withoutGlobalScopes()->whereIn(
                 'id',
-                ServiceArea::withoutGlobalScopes()->where('is_enabled', true)->pluck('area_id')
+                PartnerAreaCoverage::withoutGlobalScopes()->where('is_enabled', true)->pluck('area_id')
             )->pluck('village_id')->unique()->toArray();
 
             // Get villages in the Tehsil

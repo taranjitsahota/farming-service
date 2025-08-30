@@ -14,6 +14,9 @@ class ServiceRoleScope implements Scope
     /**
      * Apply the scope to a given Eloquent query builder.
      */
+    /**
+     * @method bool hasRole(string|array $roles)
+     */
     public function apply(Builder $builder, Model $model): void
     {
         $user = Auth::user();
@@ -22,7 +25,7 @@ class ServiceRoleScope implements Scope
             return;
         }
 
-        if ($user && $user->role === \App\Enums\RoleEnum::ADMIN) {
+        if ($user->hasRole('admin')) {
             if ($model instanceof \App\Models\Substation) {
                 $builder->where('id', $user->substation_id);
             }
@@ -31,7 +34,7 @@ class ServiceRoleScope implements Scope
             }
         }
 
-        if ($user->role === \App\Enums\RoleEnum::USER) {
+        if ($user->hasRole('farmer')) {
             $substationId = Request::get('substation_id');
 
             if ($model instanceof \App\Models\Substation) {

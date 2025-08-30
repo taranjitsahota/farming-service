@@ -8,6 +8,7 @@ use Razorpay\Api\Api;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\BookingConfirmationMail;
+use App\Models\EquipmentType;
 use App\Models\ServiceArea;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,21 +19,23 @@ class RazorPayController extends Controller
     public function createRazorpayOrder(Request $request)
     {
         $request->validate([
-            'service_area_id' => 'required|exists:serviceareas,id',
-            'substation_id' => 'required|exists:substations,id',
-            'area' => 'required|numeric|min:1'
+            'equipment_type_id' => 'required|exists:equipment_types,id',
+            // 'substation_id' => 'required|exists:substations,id',
+            'area_of_land' => 'required|numeric|min:1'
         ]);
 
-        $serviceArea = ServiceArea::findOrFail($request->service_area_id);
-        $equipment = $serviceArea->equipment;
-        $area = $request->area;
+        // $partnerAreaCoverage = $request->partner_area_coverage_id;
+        // $equipment = $partnerAreaCoverage->equipment;
+        // $area = $request->area;
 
-        if ($equipment->min_kanal && $area < $equipment->min_kanal) {
-            return $this->responseWithError('Minimum area in kanals is ' . $equipment->min_kanal . ' kanals', 422);
-        }
+        // if ($equipment->min_kanal && $area < $equipment->min_kanal) {
+        //     return $this->responseWithError('Minimum area in kanals is ' . $equipment->min_kanal . ' kanals', 422);
+        // }
 
-        $amount = $area * $equipment->price_per_kanal;
-        
+        $equipmentType = EquipmentType::findOrFail($request->equipment_type_id);
+        $area_of_land = $request->area_of_land;
+        $amount = $area_of_land * $equipmentType->price_per_kanal;
+
         if (!$amount) {
             return $this->responseWithError('Invalid amount', 422);
         }
@@ -64,7 +67,7 @@ class RazorPayController extends Controller
             'razorpay_payment_id' => 'required',
             'razorpay_order_id' => 'required',
             'booking_id' => 'required|exists:bookings,id',
-            'substation_id' => 'required|exists:substations,id'
+            // 'substation_id' => 'required|exists:substations,id'
         ]);
         try {
             $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
@@ -73,7 +76,7 @@ class RazorPayController extends Controller
             if ($payment->status == 'captured') {
                 // Save to DB: create Booking entry
 
-                $booking = Booking::where('id', $request->booking_id)
+                $booking = Booking::withoutGlobalScopes()->where('id', $request->booking_id)
                     ->where('user_id', auth()->id())
                     ->where('payment_status', 'pending')
                     ->first();
@@ -113,7 +116,7 @@ class RazorPayController extends Controller
 
                 DB::commit();
 
-                return $this->responseWithSuccess(null, 'Payment verified & booking confirmed',200);
+                return $this->responseWithSuccess(null, 'Payment verified & booking confirmed', 200);
             }
 
             return $this->responseWithError('Payment not captured', 400);

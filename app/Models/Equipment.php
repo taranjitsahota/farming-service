@@ -33,12 +33,12 @@ class Equipment extends Model
     {
         return $this->belongsTo(Service::class);
     }
-    public function substation()
-    {
-        return $this->belongsTo(Substation::class);
-    }
-    public function serviceArea()
-    {
-        return $this->hasMany(ServiceArea::class);
-    }
+    // public function substation()
+    // {
+    //     return $this->belongsTo(Substation::class);
+    // }
+    // public function serviceArea()
+    // {
+    //     return $this->hasMany(ServiceArea::class);
+    // }
 }

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('razorpay_subscription_id')->unique();
             $table->enum('plan_type', ['general', 'sugarcane']);
             $table->integer('kanals');
+            $table->decimal('land_area', 8, 2);
             $table->decimal('total_price', 8, 2);
             $table->decimal('price_per_kanal', 8, 2);
             $table->string('location')->nullable();

@@ -63,7 +63,7 @@ class SubscriptionController extends Controller
             $planType = $request->plan_type;
 
             $planId = match ($planType) {
-                'general' => 'plan_R37FFgDW2P8ytd',
+                'general' => 'plan_RBdfbscFchaqwB',
                 'sugarcane' => 'plan_R37Gn4A4jTYoh8',
             };
 
@@ -80,6 +80,8 @@ class SubscriptionController extends Controller
                     'kanals' => $kanals,
                 ]
             ]);
+            // $amount = $subscription->amount;
+            $amount = $kanals * ($planType === 'general' ? 2500 : 1500);
 
             // Save draft subscription (optional)
             Subscription::create([
@@ -87,7 +89,8 @@ class SubscriptionController extends Controller
                 'razorpay_subscription_id' => $subscription->id,
                 'plan_type' => $planType,
                 'land_area' => $kanals,
-                'total_price' => $planType === 'general' ? 2500 : 1500,
+                'total_price' => $amount,
+                'price_per_kanal' => $planType === 'general' ? 2500 : 1500,
                 'start_date' => now()->addMinutes(5),
                 'end_date' => now()->addMonths(11),
                 'status' => 'created',

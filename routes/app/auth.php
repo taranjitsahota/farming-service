@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::middleware(['role:user'])->get('/user-dashboard', function () {
+    Route::middleware(['role:farmer'])->get('/user-dashboard', function () {
         return response()->json(['message' => 'Welcome to the user dashboard']);
     });
 
@@ -43,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::middleware('role:user')->get('/user-dashboard', function () {
+    Route::middleware('role:farmer')->get('/user-dashboard', function () {
         return response()->json(['message' => 'Welcome to the user dashboard with complete registration process']);
     });
 

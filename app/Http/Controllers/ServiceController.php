@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipment;
+use App\Models\PartnerAreaCoverage;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -180,6 +181,32 @@ class ServiceController extends Controller
             return $this->responseWithSuccess([], 'Service deleted successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function getServicesByArea($areaId)
+    {
+        try {
+            // Get partners that cover this area
+            $partnerIds = PartnerAreaCoverage::where('area_id', $areaId)
+                ->where('is_enabled', true)
+                ->pluck('partner_id');
+
+            if ($partnerIds->isEmpty()) {
+                return $this->responseWithSuccess([], 'No services available in this area', 200);
+            }
+
+            // Fetch services through relationships (no joins)
+            $services = Service::whereHas('equipmentTypes.units', function ($q) use ($partnerIds) {
+                $q->whereIn('partner_id', $partnerIds)
+                    ->where('status', 'active');
+            })
+                // ->with('equipmentTypes.units')
+                ->get();
+
+            return $this->responseWithSuccess($services, 'Services fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError($e->getMessage(), 500, 'Unexpected error occurred');
         }
     }
 }

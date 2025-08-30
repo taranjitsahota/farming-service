@@ -159,7 +159,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role,
+                    'role' => $user->getRoleNames(),
                     'profile_photo_url' => $user->profile_photo_url,
                     'substation_id' => $user->substation_id ?? null
                 ];
@@ -272,7 +272,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'token' => $trimmedToken,
                 'username' => $user->name,
-                'role' => $user->role,
+                'role' => $user->getRoleNames(),
             ];
             return $this->responseWithSuccess($data, 'Login successful', 200);
         } catch (\Illuminate\Validation\ValidationException $th) {
@@ -303,6 +303,8 @@ class AuthController extends Controller
                 'password' => bcrypt($request->pin),
                 'is_verified' => false,
             ]);
+
+            $user->assignRole('farmer');
 
             $otp = GenerateOtp::GenereateOtp();
 
@@ -460,7 +462,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'token' => $trimmedToken,
                     'name' => $user->name,
-                    'role' => $user->role,
+                    'role' => $user->getRoleNames(), 
                     'profile_photo_url' => $user->profile_photo_url,
                 ];
 

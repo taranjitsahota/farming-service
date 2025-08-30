@@ -5,8 +5,8 @@ use App\Http\Controllers\EquipmentController;
 use Aws\Middleware;
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::middleware('role:user')->group(function () {
+    Route::middleware('role:farmer')->group(function () {
         Route::apiResource('equipments', EquipmentController::class);
-        Route::get('/get-equipment-by-village', [EquipmentController::class, 'getEquipmentByVillage']);
+        Route::get('/get-equipment-by-area-and-service/{areaId}/{serviceId}', [EquipmentController::class, 'getEquipmentsByAreaAndService']);
     });
 });

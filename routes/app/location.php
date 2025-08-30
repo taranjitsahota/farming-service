@@ -6,7 +6,7 @@ use App\Http\Controllers\LocationController;
 // add this in middleware
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::middleware('role:user')->group(function () {
+    Route::middleware('role:farmer')->group(function () {
         Route::prefix('location')->controller(LocationController::class)->group(function () {
             Route::get('/states', 'getStates');
             Route::get('/districts/{state_id}', 'getDistricts');

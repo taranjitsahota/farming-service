@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('password');
             $table->boolean('is_verified')->default(false);
-            $table->enum('role', ['superadmin', 'admin', 'user', 'driver'])->default('user');
             $table->unsignedBigInteger('substation_id')->nullable();
             $table->softDeletes();
             $table->rememberToken();

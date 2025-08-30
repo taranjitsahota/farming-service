@@ -26,12 +26,12 @@ class AuthService
                 'substation_id' => $request->substation_id, 
                 'phone' => $request->phone,
             ];
+
+            $user = User::create($userData);
     
             if ($role) {
-                $userData['role'] = $role;
+                $user->assignRole($role);
             }
-    
-            $user = User::create($userData);
     
             DB::commit();
             return $user;

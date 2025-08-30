@@ -16,4 +16,8 @@ class Service extends Model
     {
         return $this->hasMany(Equipment::class);
     }
+    public function equipmentTypes()
+    {
+        return $this->hasMany(EquipmentType::class);
+    }
 }
