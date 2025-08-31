@@ -17,13 +17,13 @@ class PartnerAreaCoverageController extends Controller
             $partnerAreaCoverages = PartnerAreaCoverage::with('partner', 'area', 'area.tehsil', 'area.district', 'area.state', 'area.village')->get();
             $formatter = $partnerAreaCoverages->map(function ($item) {
                 // $unit = $item->equipmentType->units()
-                //     ->where('partner_id', $item->partner_id)
+                //     ->where('partner_id', $item->partner_id)z
                 //     ->first();
 
                 return [
                     'id' => $item->id,
                     'partner_id' => $item->partner_id,
-                    'user_name' => $item->partner->name,
+                    'user_name' => $item->partner->user->name,
                     'area_id' => $item->area_id,
                     'tehsil_id' => $item->area->tehsil_id,
                     'tehsil_name' => $item->area->tehsil->name,

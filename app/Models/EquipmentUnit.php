@@ -32,7 +32,7 @@ class EquipmentUnit extends Model
         'partner_id',
         'equipment_type_id',
         'substation_id',
-        'tractor_id',
+        // 'tractor_id',
         'serial_no',
         'status',
         'meta'

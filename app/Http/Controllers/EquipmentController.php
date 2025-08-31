@@ -280,9 +280,21 @@ class EquipmentController extends Controller
                         ->where('status', 'active');
                 })
                 ->get();
+                $formatter = $equipmentTypes->map(function ($eq) {
+                    return [
+                        'id'              => $eq->id,
+                        'name'            => $eq->equipment->name,
+                        'service_id'      => $eq->service_id,
+                        'image'           => $eq->image,
+                        'price_per_kanal' => $eq->price_per_kanal,
+                        'min_kanal'       => $eq->min_kanal,
+                        'minutes_per_kanal' => $eq->minutes_per_kanal,
+                        'requires_tractor' => $eq->requires_tractor
+                    ];
+                });
 
 
-            return $this->responseWithSuccess($equipmentTypes, 'Equipments fetched successfully', 200);
+            return $this->responseWithSuccess($formatter, 'Equipments fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError($e->getMessage(), 500, 'Unexpected error occurred');
         }

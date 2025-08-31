@@ -24,10 +24,10 @@ class Equipment extends Model
         'is_enabled',
     ];
 
-    protected static function booted()
-    {
-        static::addGlobalScope(new ServiceRoleScope);
-    }
+    // protected static function booted()
+    // {
+    //     static::addGlobalScope(new ServiceRoleScope);
+    // }
 
     public function service()
     {

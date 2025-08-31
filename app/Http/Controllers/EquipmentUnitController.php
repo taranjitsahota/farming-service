@@ -25,8 +25,8 @@ class EquipmentUnitController extends Controller
                     'equipment_type_name' => $item->equipmentType->equipment->name,
                     'substation_id' => $item->substation_id,
                     'substation_name' => $item->substation->name,
-                    'tractor_id' => $item->tractor_id,
-                    'tractor_name' => $item->tractor->name,
+                    // 'tractor_id' => $item->tractor_id,
+                    // 'tractor_name' => $item->tractor->name,
                     'serial_no' => $item->serial_no,
                     'status' => $item->status,
                 ];
