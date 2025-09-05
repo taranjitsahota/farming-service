@@ -12,6 +12,5 @@ class Crop extends Model
 
     protected $fillable = [
         'name',
-        'is_enabled',
     ];
 }

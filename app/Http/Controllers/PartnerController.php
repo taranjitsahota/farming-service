@@ -20,7 +20,7 @@ class PartnerController extends Controller
     public function index()
     {
         try {
-            $data = User::role('partner')->with('partner')->get();
+            $data = User::role('partner')->with('partner', 'driver')->get();
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->partner->id,

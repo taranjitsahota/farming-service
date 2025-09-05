@@ -839,176 +839,184 @@ class SlotController extends Controller
 
 
 
-    // use Carbon\Carbon;
+    private function generateAvailableSlots(
+        $dayStartTime,
+        $dayEndTime,
+        $totalMinutes,
+        $existingBookings,      // same-type bookings (already buffered) for this date/area
+        $availableCapacity,     // not used now, kept for compatibility
+        $areaId,
+        $equipmentTypeId
+    ) {
+        $slots = [];
+        $requestedDate = $dayStartTime->toDateString();
 
-private function generateAvailableSlots(
-    $dayStartTime,
-    $dayEndTime,
-    $totalMinutes,
-    $existingBookings,      // same-type bookings (already buffered) for this date/area
-    $availableCapacity,     // not used now, kept for compatibility
-    $areaId,
-    $equipmentTypeId
-) {
-    $slots = [];
-    $requestedDate = $dayStartTime->toDateString();
+        $equipmentType = EquipmentType::findOrFail($equipmentTypeId);
 
-    $equipmentType = EquipmentType::findOrFail($equipmentTypeId);
-
-    // Preload partners and resources and their unavailabilities (one DB call)
-    $partners = PartnerAreaCoverage::with([
+        // Preload partners and resources and their unavailabilities (one DB call)
+        $partners = PartnerAreaCoverage::with([
             'partner.drivers.unavailability',
             'partner.tractors.unavailability',
             'partner.units.unavailability',
             'partner.unavailability'
         ])
-        ->enabled()
-        ->where('area_id', $areaId)
-        ->get()
-        ->pluck('partner');
+            ->enabled()
+            ->where('area_id', $areaId)
+            ->get()
+            ->pluck('partner');
 
-    // Also load all bookings in the area (all equipment types) for the date,
-    // so we can compute drivers/tractor usage per slot.
-    $bufferMinutes = 30;
-    $areaBookingsAllTypes = Booking::withoutGlobalScopes()
-        ->where('slot_date', $requestedDate)
-        ->where('area_id', $areaId)
-        ->where(function ($q) {
-            $q->where('payment_status', 'confirmed')
-              ->orWhere(function ($q2) {
-                  $q2->where('payment_status', 'pending')
-                     ->where('reserved_until', '>', now());
-              });
-        })
-        ->with('equipmentType:id,requires_tractor')
-        ->orderBy('start_time')
-        ->get()
-        ->map(function ($b) use ($requestedDate, $bufferMinutes) {
-            $bStart = Carbon::parse($requestedDate . ' ' . $b->start_time);
-            $bEnd   = Carbon::parse($requestedDate . ' ' . $b->end_time);
-            $b->buffered_start_time = $bStart->copy()->subMinutes($bufferMinutes);
-            $b->buffered_end_time   = $bEnd->copy()->addMinutes($bufferMinutes);
-            return $b;
-        });
+        // dd(
+        //     $partners->flatMap(function ($partner) {
+        //         return $partner->drivers->flatMap->unavailability;
+        //     })
+        // );
 
-    $currentStart = $dayStartTime->copy();
 
-    // Helper closure: does any unavailability collection overlap this slot?
-    $overlapsWindow = function ($unavCollection, Carbon $slotStart, Carbon $slotEnd) {
-        foreach ($unavCollection as $u) {
-            // ensure we have Carbon instances
-            $uStart = Carbon::parse($u->start_at);
-            $uEnd   = Carbon::parse($u->end_at);
-            if ($slotEnd->gt($uStart) && $slotStart->lt($uEnd)) {
-                return true;
+        // Also load all bookings in the area (all equipment types) for the date,
+        // so we can compute drivers/tractor usage per slot.
+        $bufferMinutes = 30;
+        $areaBookingsAllTypes = Booking::withoutGlobalScopes()
+            ->where('slot_date', $requestedDate)
+            ->where('area_id', $areaId)
+            ->where(function ($q) {
+                $q->where('payment_status', 'confirmed')
+                    ->orWhere(function ($q2) {
+                        $q2->where('payment_status', 'pending')
+                            ->where('reserved_until', '>', now());
+                    });
+            })
+            ->with('equipmentType:id,requires_tractor')
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($b) use ($requestedDate, $bufferMinutes) {
+                $bStart = Carbon::parse($requestedDate . ' ' . $b->start_time);
+                $bEnd   = Carbon::parse($requestedDate . ' ' . $b->end_time);
+                $b->buffered_start_time = $bStart->copy()->subMinutes($bufferMinutes);
+                $b->buffered_end_time   = $bEnd->copy()->addMinutes($bufferMinutes);
+                return $b;
+            });
+
+        $currentStart = $dayStartTime->copy();
+
+        // Helper closure: does any unavailability collection overlap this slot?
+        $overlapsWindow = function ($unavCollection, Carbon $slotStart, Carbon $slotEnd) {
+            foreach ($unavCollection as $u) {
+                // ensure we have Carbon instances
+                $uStart = Carbon::parse($u->start_at);
+                $uEnd   = Carbon::parse($u->end_at);
+                if ($slotEnd->gt($uStart) && $slotStart->lt($uEnd)) {
+                    return true;
+                }
             }
-        }
-        return false;
-    };
+            return false;
+        };
 
-    while ($currentStart->lt($dayEndTime)) {
-        $slotEnd = $currentStart->copy()->addMinutes($totalMinutes);
-        if ($slotEnd->gt($dayEndTime)) break;
+        while ($currentStart->lt($dayEndTime)) {
+            $slotEnd = $currentStart->copy()->addMinutes($totalMinutes);
+            if ($slotEnd->gt($dayEndTime)) break;
 
-        // 1) Compute total available pools for THIS slot (respecting unavailability)
-        $totalDrivers = 0;
-        $totalTractors = 0;
-        $totalEquipments = 0;
+            // 1) Compute total available pools for THIS slot (respecting unavailability)
+            $totalDrivers = 0;
+            $totalTractors = 0;
+            $totalEquipments = 0;
 
-        foreach ($partners as $partner) {
-            // skip partner if partner_unavailability overlaps this slot
-            if (isset($partner->unavailability) && $overlapsWindow($partner->unavailability, $currentStart, $slotEnd)) {
-                continue;
-            }
-
-            // drivers for this partner available in slot
-            foreach ($partner->drivers as $driver) {
-                if ($driver->status !== 'active') continue;
-                // skip driver if driver_unavailability overlaps this slot
-                if (isset($driver->unavailability) && $overlapsWindow($driver->unavailability, $currentStart, $slotEnd)) {
+            foreach ($partners as $partner) {
+                // skip partner if partner_unavailability overlaps this slot
+                if (isset($partner->unavailability) && $overlapsWindow($partner->unavailability, $currentStart, $slotEnd)) {
                     continue;
                 }
-                $totalDrivers++;
-            }
 
-            // tractors for this partner available in slot
-            foreach ($partner->tractors as $tractor) {
-                if ($tractor->status !== 'active') continue;
-                if (isset($tractor->unavailability) && $overlapsWindow($tractor->unavailability, $currentStart, $slotEnd)) {
-                    continue;
+                // drivers for this partner available in slot
+                foreach ($partner->drivers as $driver) {
+                    // dd($driver);
+                    if ($driver->status !== 'active') continue;
+                    // skip driver if driver_unavailability overlaps this slot
+                    // dd($overlapsWindow, $driver->unavailability, $currentStart, $slotEnd);
+                    if (isset($driver->unavailability) && $overlapsWindow($driver->unavailability, $currentStart, $slotEnd)) {
+                        // dd($driver->unavailability, $currentStart, $slotEnd);
+                        continue;
+                    }
+                    // dd($driver);
+                    $totalDrivers++;
                 }
-                $totalTractors++;
-            }
 
-            // units (equipments) of requested type available in slot for this partner
-            foreach ($partner->units as $unit) {
-                if ($unit->status !== 'active') continue;
-                if ((int)$unit->equipment_type_id !== (int)$equipmentTypeId) continue;
-                if (isset($unit->unavailability) && $overlapsWindow($unit->unavailability, $currentStart, $slotEnd)) {
-                    continue;
+                // tractors for this partner available in slot
+                foreach ($partner->tractors as $tractor) {
+                    if ($tractor->status !== 'active') continue;
+                    if (isset($tractor->unavailability) && $overlapsWindow($tractor->unavailability, $currentStart, $slotEnd)) {
+                        continue;
+                    }
+                    $totalTractors++;
                 }
-                $totalEquipments++;
+
+                // units (equipments) of requested type available in slot for this partner
+                foreach ($partner->units as $unit) {
+                    if ($unit->status !== 'active') continue;
+                    if ((int)$unit->equipment_type_id !== (int)$equipmentTypeId) continue;
+                    if (isset($unit->unavailability) && $overlapsWindow($unit->unavailability, $currentStart, $slotEnd)) {
+                        continue;
+                    }
+                    $totalEquipments++;
+                }
             }
+            // dd($totalDrivers);
+            // 2) Count how many overlapping bookings consume resources in THIS slot
+            // - usedDrivers: count of all overlapping bookings in area (any equipment type)
+            // - usedEquipments: count of overlapping bookings of this equipment type
+            // - usedTractors: count of overlapping bookings whose equipmentType.requires_tractor === true
+            $overlapArea = $areaBookingsAllTypes->filter(function ($b) use ($currentStart, $slotEnd) {
+                return $slotEnd->gt($b->buffered_start_time) && $currentStart->lt($b->buffered_end_time);
+            });
+
+            $usedDrivers = $overlapArea->count();
+
+            // equipments of this type that overlap (we must only subtract same-type equipment)
+            $overlapSameType = $existingBookings->filter(function ($b) use ($currentStart, $slotEnd) {
+                return $slotEnd->gt($b->buffered_start_time) && $currentStart->lt($b->buffered_end_time);
+            });
+            $usedEquipments = $overlapSameType->count();
+
+            // tractors used by overlapping bookings (bookings whose equipment requires tractor)
+            $usedTractors = $overlapArea->filter(function ($b) {
+                return isset($b->equipmentType) && $b->equipmentType->requires_tractor;
+            })->count();
+
+            // 3) Remaining pools
+            $availableDrivers    = max(0, $totalDrivers - $usedDrivers);
+            $availableEquipments = max(0, $totalEquipments - $usedEquipments);
+            $availableTractors   = max(0, $totalTractors - $usedTractors);
+
+            // 4) slot capacity depending on requires_tractor
+            if ($equipmentType->requires_tractor) {
+                $slotCapacity = min($availableDrivers, $availableEquipments, $availableTractors);
+            } else {
+                $slotCapacity = min($availableDrivers, $availableEquipments);
+            }
+
+            // debug log (optional during testing)
+            // \Log::info('Slot check', [
+            //     'slot_start' => $currentStart->format('H:i'),
+            //     'slot_end'   => $slotEnd->format('H:i'),
+            //     'totalDrivers' => $totalDrivers, 'usedDrivers' => $usedDrivers,
+            //     'totalEquipments' => $totalEquipments, 'usedEquipments' => $usedEquipments,
+            //     'totalTractors' => $totalTractors, 'usedTractors' => $usedTractors,
+            //     'slotCapacity' => $slotCapacity
+            // ]);
+
+            if ($slotCapacity > 0) {
+                $slots[] = [
+                    'start_time' => $currentStart->format('H:i'),
+                    'end_time'   => $slotEnd->format('H:i'),
+                    'duration_required_minutes' => $totalMinutes,
+                    'area_id' => $areaId,
+                    'equipment_type_id' => $equipmentTypeId,
+                    'available_capacity' => $slotCapacity
+                ];
+            }
+
+            $currentStart->addMinutes(30);
         }
 
-        // 2) Count how many overlapping bookings consume resources in THIS slot
-        // - usedDrivers: count of all overlapping bookings in area (any equipment type)
-        // - usedEquipments: count of overlapping bookings of this equipment type
-        // - usedTractors: count of overlapping bookings whose equipmentType.requires_tractor === true
-        $overlapArea = $areaBookingsAllTypes->filter(function ($b) use ($currentStart, $slotEnd) {
-            return $slotEnd->gt($b->buffered_start_time) && $currentStart->lt($b->buffered_end_time);
-        });
-
-        $usedDrivers = $overlapArea->count();
-
-        // equipments of this type that overlap (we must only subtract same-type equipment)
-        $overlapSameType = $existingBookings->filter(function ($b) use ($currentStart, $slotEnd) {
-            return $slotEnd->gt($b->buffered_start_time) && $currentStart->lt($b->buffered_end_time);
-        });
-        $usedEquipments = $overlapSameType->count();
-
-        // tractors used by overlapping bookings (bookings whose equipment requires tractor)
-        $usedTractors = $overlapArea->filter(function ($b) {
-            return isset($b->equipmentType) && $b->equipmentType->requires_tractor;
-        })->count();
-
-        // 3) Remaining pools
-        $availableDrivers    = max(0, $totalDrivers - $usedDrivers);
-        $availableEquipments = max(0, $totalEquipments - $usedEquipments);
-        $availableTractors   = max(0, $totalTractors - $usedTractors);
-
-        // 4) slot capacity depending on requires_tractor
-        if ($equipmentType->requires_tractor) {
-            $slotCapacity = min($availableDrivers, $availableEquipments, $availableTractors);
-        } else {
-            $slotCapacity = min($availableDrivers, $availableEquipments);
-        }
-
-        // debug log (optional during testing)
-        // \Log::info('Slot check', [
-        //     'slot_start' => $currentStart->format('H:i'),
-        //     'slot_end'   => $slotEnd->format('H:i'),
-        //     'totalDrivers' => $totalDrivers, 'usedDrivers' => $usedDrivers,
-        //     'totalEquipments' => $totalEquipments, 'usedEquipments' => $usedEquipments,
-        //     'totalTractors' => $totalTractors, 'usedTractors' => $usedTractors,
-        //     'slotCapacity' => $slotCapacity
-        // ]);
-
-        if ($slotCapacity > 0) {
-            $slots[] = [
-                'start_time' => $currentStart->format('H:i'),
-                'end_time'   => $slotEnd->format('H:i'),
-                'duration_required_minutes' => $totalMinutes,
-                'area_id' => $areaId,
-                'equipment_type_id' => $equipmentTypeId,
-                'available_capacity' => $slotCapacity
-            ];
-        }
-
-        $currentStart->addMinutes(30);
+        return $slots;
     }
-
-    return $slots;
-}
-
 }

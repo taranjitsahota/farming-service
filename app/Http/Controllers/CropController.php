@@ -30,7 +30,6 @@ class CropController extends Controller
         try {
             $request->validate([
                 'name' => 'required|unique:crops,name',
-                'is_enabled' => 'required',
             ]);
 
             $crop = Crop::create($request->all());
@@ -66,7 +65,6 @@ class CropController extends Controller
         try {
             $request->validate([
                 'name' => 'sometimes|required',
-                'is_enabled' => 'required',
             ]);
 
             $crop = Crop::findOrFail($id);

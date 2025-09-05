@@ -10,7 +10,14 @@ class PartnerUnavailability extends Model
 {
     use HasFactory;
     protected $table = 'partner_unavailability';
-    protected $fillable = ['partner_id', 'start_at', 'end_at', 'reason'];
+    protected $fillable = [
+        'partner_id',
+        'start_at',
+        'end_at',
+        'leave_type',
+        'shift',
+        'reason'
+    ];
     protected $casts = ['start_at' => 'date:Y-m-d', 'end_at' => 'date:Y-m-d'];
 
     public function partner()

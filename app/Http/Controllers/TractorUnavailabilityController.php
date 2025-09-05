@@ -20,7 +20,7 @@ class TractorUnavailabilityController extends Controller
                 return [
                     'id' => $item->id,
                     'tractor_id' => $item->tractor_id,
-                    'user_name' => $item->tractor->partner->name,
+                    'user_name' => $item->tractor->partner->user->name,
                     'tractor_name' => $item->tractor->name,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
                     'end_at' => $item->end_at ? $item->end_at->format('Y-m-d') : null,

@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             BusinessTimingSeeder::class,
             ServicesTableSeeder::class,
             EquipmentSeeder::class,
+            CropSeeder::class,
             VillagesImportSeeder::class,
         ]);
 

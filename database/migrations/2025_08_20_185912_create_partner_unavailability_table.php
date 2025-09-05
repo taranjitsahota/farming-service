@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
             $table->timestamp('start_at')->index();
             $table->timestamp('end_at')->index();
+            $table->enum('leave_type', ['single_day', 'shift','long_leave']);
+            $table->enum('shift', ['first', 'second'])->nullable();
             $table->string('reason')->nullable();
             $table->timestamps();
 

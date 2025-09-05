@@ -14,13 +14,14 @@ class PartnerUnavailabilityController extends Controller
     public function index()
     {
         try {
-            $data = PartnerUnavailability::with('users')->get();
+            $data = PartnerUnavailability::with('partner')->get();
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'partner_id' => $item->partner_id,
                     'partner_name' => $item->partner->user->name,
                     'partner_id' => $item->partner_id,
+                    'leave_type' => $item->leave_type,
+                    'shift' => $item->shift,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
                     'end_at' => $item->end_at ? $item->start_at->format('Y-m-d') : null,
                     'reason' => $item->reason,
@@ -38,7 +39,9 @@ class PartnerUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'partner_id' => 'required',
+            'partner_id' => 'required|exists:partners,id',
+            'leave_type' => 'required',
+            'shift' => 'sometimes|required',
             'start_at' => 'required',
             'end_at' => 'required',
             'reason' => 'required',

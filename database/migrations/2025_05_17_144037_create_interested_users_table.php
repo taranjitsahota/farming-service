@@ -21,11 +21,6 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
-            $table->string('village_name')->nullable();
-            $table->string('pincode')->nullable();
-            $table->string('district')->nullable();
-            $table->string('area_of_land')->nullable();
-            $table->string('land_unit')->nullable();
             $table->string('type');
             $table->softDeletes();
             $table->timestamps();

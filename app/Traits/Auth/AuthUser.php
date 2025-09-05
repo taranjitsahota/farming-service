@@ -10,19 +10,17 @@ use Illuminate\Support\Facades\Hash;
 
 trait AuthUser
 {
-    
-    public function register($request,$role)
+
+    public function register($request, $role)
     {
-        try{
+        try {
 
             return AuthService::register($request, $role);
-
-
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return false;
         }
     }
-        
+
     public function processLoginAdminSuperadmin($request)
     {
         try {
@@ -33,15 +31,19 @@ trait AuthUser
             return false;
         }
     }
-        
+
     public function processUser($request)
     {
         try {
 
-            $user = User::where('phone', $request->phone)->where('is_verified', true)->first();
+            $user = User::where('phone', $request->phone)->first();
 
             if (!$user) {
                 return false;
+            }
+
+            if (!$user->is_verified) {
+                return 'not_verified';
             }
 
             if (!Hash::check($request->password, $user->password)) {
@@ -52,12 +54,11 @@ trait AuthUser
             $trimmedToken = explode('|', $token)[1];
 
             return [$user, $trimmedToken];
-
         } catch (\Exception $e) {
             return false;
         }
     }
-        
+
     public function isOtpRequired($user, $browserHash)
     {
         $lastVerification = OtpVerification::where('user_id', $user->id)
@@ -74,7 +75,7 @@ trait AuthUser
 
         return $otpExpired || $browserChanged;
     }
-        
+
     public function storeOtpVerification($user, $otp)
     {
         OtpVerification::updateOrCreate(
@@ -85,5 +86,4 @@ trait AuthUser
             ]
         );
     }
-
 }

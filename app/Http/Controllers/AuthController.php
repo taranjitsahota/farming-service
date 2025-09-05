@@ -262,6 +262,10 @@ class AuthController extends Controller
 
             $result = $this->processUser($request);
 
+            if ($result === 'not_verified') {
+                return $this->responseWithError('User is not verified yet.', 403);
+            }
+
             if (!$result) {
                 return $this->responseWithError('Invalid PIN', 401);
             }
@@ -462,7 +466,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'token' => $trimmedToken,
                     'name' => $user->name,
-                    'role' => $user->getRoleNames(), 
+                    'role' => $user->getRoleNames(),
                     'profile_photo_url' => $user->profile_photo_url,
                 ];
 
