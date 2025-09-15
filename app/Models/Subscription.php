@@ -15,10 +15,16 @@ class Subscription extends Model
         'plan_type',
         'location',
         'land_area',
+        'kanals',
         'price_per_kanal',
         'total_price',
         'start_date',
         'end_date',
         'status'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

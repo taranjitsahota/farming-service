@@ -14,7 +14,7 @@ class EquipmentUnavailabilityController extends Controller
     public function index()
     {
         try{
-            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.substation','unit.tractor','unit.partner')->get();
+            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.substation','unit.partner')->get();
             $formatter = $equipmentUnavailability->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -22,15 +22,15 @@ class EquipmentUnavailabilityController extends Controller
                     'unit_name' => $item->unit->name,
                     'serial_no' => $item->unit->serial_no,
                     'equipment_type_id' => $item->unit->equipment_type_id,
-                    'equipment_type_name' => $item->unit->equipmentType->name,
+                    'equipment_type_name' => $item->unit->equipmentType->equipment->name,
                     'substation_id' => $item->unit->substation_id,
                     'substation_name' => $item->unit->substation->name,
-                    'tractor_id' => $item->unit->tractor_id ?? null,
-                    'tractor_name' => $item->unit->tractor->name,
                     'partner_id' => $item->unit->partner_id,
-                    'partner_name' => $item->unit->partner->name,
-                    'start_at' => $item->start_at,
-                    'end_at' => $item->end_at,
+                    'partner_name' => $item->unit->partner->user->name,
+                    'start_at' => $item->start_at->format('Y-m-d'),
+                    'end_at' => $item->end_at->format('Y-m-d'),
+                    'leave_type' => $item->leave_type,
+                    'shift' => $item->shift,
                     'reason' => $item->reason,
                 ];
             });
@@ -46,9 +46,11 @@ class EquipmentUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'unit_id' => 'required',
+            'unit_id' => 'required|exists:equipment_units,id',
             'start_at' => 'required',
             'end_at' => 'required',
+            'leave_type'=> 'required',
+            'shift'=> 'sometimes|required',
             'reason' => 'required',
         ]);
         try{

@@ -20,8 +20,12 @@ class DriverUnavailabilityController extends Controller
             $formattedData = $driverUnavailabilities->map(function ($item) {
                 return [
                     'id' => $item->id,
+                    'partner_id' => $item->partner_id,
+                    'partner_name' => $item->partner->user->name,
                     'driver_id' => $item->driver_id,
                     'driver_name' => $item->driver->user->name,
+                    'shift' => $item->shift,
+                    'leave_type' => $item->leave_type,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
                     'end_at' => $item->end_at ? $item->start_at->format('Y-m-d') : null,
                     'reason' => $item->reason,
@@ -41,8 +45,11 @@ class DriverUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'driver_id' => 'required',
+            'partner_id' => 'required|exists:partners,id', 
+            'driver_id' => 'required|exists:drivers,id',
             'start_at' => 'required',
+            'shift' => 'sometimes|required',
+            'leave_type' => 'required',
             'end_at' => 'required',
             'reason' => 'nullable',
         ]);

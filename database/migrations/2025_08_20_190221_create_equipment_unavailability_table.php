@@ -11,14 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('driver_unavailability', function (Blueprint $table) {
+        Schema::create('equipment_unavailability', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
+            // $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
+            $table->foreignId('unit_id')->constrained('equipment_units')->cascadeOnDelete();
             $table->timestamp('start_at')->index();
             $table->timestamp('end_at')->index();
+            $table->enum('leave_type', ['single_day', 'shift','long_leave']);
+            $table->enum('shift', ['first', 'second'])->nullable();
             $table->string('reason')->nullable();
             $table->timestamps();
-            $table->index(['driver_id', 'start_at', 'end_at'], 'driver_unavail_window_idx');
+
+            $table->index(['unit_id', 'start_at', 'end_at'], 'unit_unavail_window_idx');
         });
     }
 
@@ -27,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('driver_unavailability');
+        Schema::dropIfExists('equipment_unavailability');
     }
 };

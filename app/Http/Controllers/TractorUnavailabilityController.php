@@ -24,6 +24,8 @@ class TractorUnavailabilityController extends Controller
                     'tractor_name' => $item->tractor->name,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
                     'end_at' => $item->end_at ? $item->end_at->format('Y-m-d') : null,
+                    'leave_type' => $item->leave_type,
+                    'shift' => $item->shift,
                     'reason' => $item->reason,
                 ];
             });
@@ -40,9 +42,11 @@ class TractorUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tractor_id' => 'required',
+            'tractor_id' => 'required|exists:tractors,id',
             'start_at' => 'required',
             'end_at' => 'required',
+            'shift' => 'sometimes|required',
+            'leave_type' => 'required',
             'reason' => 'required',
         ]);
         try{

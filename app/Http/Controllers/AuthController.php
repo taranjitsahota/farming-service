@@ -468,6 +468,7 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'role' => $user->getRoleNames(),
                     'profile_photo_url' => $user->profile_photo_url,
+                    'substation_id' => $user->substation_id ?? null
                 ];
 
                 return $this->responseWithSuccess($data, 'OTP verified successfully. Login successfull.', 200);

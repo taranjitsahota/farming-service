@@ -20,7 +20,6 @@ return new class extends Migration
             $table->unsignedBigInteger('village_id');
             // $table->boolean('is_enabled')->default(true);
             $table->string('pincode')->nullable();
-            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('substation_id')->references('id')->on('substations')->onDelete('set null');

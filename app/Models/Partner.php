@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,7 +13,7 @@ class Partner extends Model
 
     protected $fillable = ['user_id', 'company_name', 'gst_number', 'address', 'is_individual'];
 
-      public function drivers()
+    public function drivers()
     {
         return $this->hasMany(Driver::class);
     }
@@ -46,5 +47,15 @@ class Partner extends Model
     public function scopeEnabled($q)
     {
         return $q->where('is_enabled', true);
+    }
+    public function areas()
+    {
+        return $this->belongsToMany(Area::class, 'partner_area_coverage')
+            ->withPivot('is_enabled')
+            ->withTimestamps();
+    }
+    protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
     }
 }

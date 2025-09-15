@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Area extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    protected $fillable = ['tehsil_id','substation_id' , 'district_id', 'state_id', 'village_id', 'pincode', 'village_id', 'is_enabled'];
+    protected $fillable = ['tehsil_id', 'substation_id', 'district_id', 'state_id', 'village_id', 'pincode', 'village_id', 'is_enabled'];
 
-     protected static function booted()
+    protected static function booted()
     {
         static::addGlobalScope(new ServiceRoleScope);
     }
@@ -45,5 +45,11 @@ class Area extends Model
     public function substation()
     {
         return $this->belongsTo(Substation::class);
+    }
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class, 'partner_area_coverage')
+            ->withPivot('is_enabled')
+            ->withTimestamps();
     }
 }

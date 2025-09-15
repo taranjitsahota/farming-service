@@ -275,23 +275,26 @@ class EquipmentController extends Controller
 
             // Fetch equipments for those partners and service
             $equipmentTypes = EquipmentType::where('service_id', $serviceId)
-                ->whereHas('units', function ($q) use ($partnerIds) {
-                    $q->whereIn('partner_id', $partnerIds)
-                        ->where('status', 'active');
-                })
+                ->with(['units' => function ($q) use ($partnerIds) {
+                    if ($partnerIds->isNotEmpty()) {
+                        $q->whereIn('partner_id', $partnerIds)
+                            ->where('status', 'active');
+                    }
+                }])
                 ->get();
-                $formatter = $equipmentTypes->map(function ($eq) {
-                    return [
-                        'id'              => $eq->id,
-                        'name'            => $eq->equipment->name,
-                        'service_id'      => $eq->service_id,
-                        'image'           => $eq->image,
-                        'price_per_kanal' => $eq->price_per_kanal,
-                        'min_kanal'       => $eq->min_kanal,
-                        'minutes_per_kanal' => $eq->minutes_per_kanal,
-                        'requires_tractor' => $eq->requires_tractor
-                    ];
-                });
+            $formatter = $equipmentTypes->map(function ($eq) {
+                return [
+                    'id'              => $eq->id,
+                    'name'            => $eq->equipment->name,
+                    'service_id'      => $eq->service_id,
+                    'image'           => $eq->image,
+                    'price_per_kanal' => $eq->price_per_kanal,
+                    'min_kanal'       => $eq->min_kanal,
+                    'minutes_per_kanal' => $eq->minutes_per_kanal,
+                    'requires_tractor' => $eq->requires_tractor,
+                    'is_available'      => $eq->units->isNotEmpty(),
+                ];
+            });
 
 
             return $this->responseWithSuccess($formatter, 'Equipments fetched successfully', 200);

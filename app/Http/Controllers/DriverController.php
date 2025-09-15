@@ -177,4 +177,25 @@ class DriverController extends Controller
             return $this->responseWithError($e->getMessage(), 500);
         }
     }
+
+    public function driverByPartnerId($id){
+        try{
+            $drivers = Driver::where('partner_id', $id)->get();
+            $formattedData = $drivers->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'driver_name' => $item->user->name,
+                    'email' => $item->user->email,
+                    'phone' => $item->user->phone,
+                    'license_number' => $item->license_number,
+                    'experience_years' => $item->experience_years,
+                    'status' => $item->status,
+                ];
+            });
+            return $this->responseWithSuccess($formattedData, 'Drivers fetched successfully', 200);
+        }catch (\Exception $e){
+            return $this->responseWithError($e->getMessage(), 500);
+
+        }
+    }
 }

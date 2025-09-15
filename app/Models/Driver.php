@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,4 +31,9 @@ class Driver extends Model
     {
         return $this->hasMany(DriverUnavailability::class);
     }
+     protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
+    }
+
 }

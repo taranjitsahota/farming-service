@@ -9,7 +9,7 @@ class EquipmentUnavailability extends Model
 {
     use HasFactory;
     protected $table = 'equipment_unavailability';
-    protected $fillable = ['unit_id', 'start_at', 'end_at', 'reason'];
+    protected $fillable = ['unit_id', 'start_at', 'end_at', 'leave_type', 'shift', 'reason'];
     protected $casts = ['start_at' => 'datetime', 'end_at' => 'datetime'];
 
     public function unit()

@@ -10,7 +10,7 @@ class DriverUnavailability extends Model
     use HasFactory;
 
     protected $table = 'driver_unavailability';
-    protected $fillable = ['driver_id', 'start_at', 'end_at', 'reason'];
+    protected $fillable = ['partner_id', 'driver_id', 'start_at', 'end_at', 'leave_type', 'shift', 'reason'];
     protected $casts = [
         'start_at' => 'datetime',
         'end_at'   => 'datetime',
@@ -20,6 +20,11 @@ class DriverUnavailability extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
     }
 
     public function scopeOverlapping($q, $start, $end)

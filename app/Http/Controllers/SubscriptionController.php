@@ -34,7 +34,7 @@ class SubscriptionController extends Controller
                     'end_date' => $subscriptions->end_date,
                 ];
             });
-            return $this->responseWithSuccess($subscriptions, 'Subscriptions fetched successfully', 200);
+            return $this->responseWithSuccess($formatter, 'Subscriptions fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -91,6 +91,7 @@ class SubscriptionController extends Controller
                 'land_area' => $kanals,
                 'total_price' => $amount,
                 'price_per_kanal' => $planType === 'general' ? 2500 : 1500,
+                'kanals' => $kanals,
                 'start_date' => now()->addMinutes(5),
                 'end_date' => now()->addMonths(11),
                 'status' => 'created',
