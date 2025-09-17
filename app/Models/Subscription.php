@@ -20,11 +20,16 @@ class Subscription extends Model
         'total_price',
         'start_date',
         'end_date',
+        'next_billing_date',
         'status'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+     public function payments()
+    {
+        return $this->hasMany(SubscriptionPayment::class);
     }
 }

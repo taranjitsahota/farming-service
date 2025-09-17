@@ -23,7 +23,15 @@ return new class extends Migration
             $table->string('location')->nullable();
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('status', ['created', 'active', 'cancelled', 'completed'])->default('active');
+            $table->timestamp('next_billing_date')->nullable();
+              $table->enum('status', [
+                'created',     // just created, not yet activated
+                'active',      // active and paid
+                'past_due',    // payment failed, awaiting retry
+                'paused',      // paused manually
+                'cancelled',   // cancelled by admin or user
+                'completed',   // completed after all cycles
+            ])->default('created');
             $table->timestamps();
         });
     }

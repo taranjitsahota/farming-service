@@ -8,5 +8,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:farmer')->group(function () {
         Route::apiResource('subscription', SubscriptionController::class);
         Route::get('/verify-subscription/{id}', [SubscriptionController::class, 'verifySubscription']);
+        Route::post('/verify-payment', [SubscriptionController::class, 'verifyPayment']);
     });
 });

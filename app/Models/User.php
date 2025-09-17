@@ -76,4 +76,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(Driver::class);
     }
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class);
+    }
 }

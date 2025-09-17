@@ -48,8 +48,8 @@ class Area extends Model
     }
     public function partners()
     {
-        return $this->belongsToMany(Partner::class, 'partner_area_coverage')
-            ->withPivot('is_enabled')
-            ->withTimestamps();
+        return $this->belongsToMany(Partner::class, 'partner_area_coverage');
+            // ->withPivot('is_enabled')
+            // ->withTimestamps();
     }
 }

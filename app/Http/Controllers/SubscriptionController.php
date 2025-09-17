@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subscription;
+use App\Models\SubscriptionPayment;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
@@ -16,7 +17,7 @@ class SubscriptionController extends Controller
     public function index()
     {
         try {
-            $subscriptions = Subscription::with('user')->get();
+            $subscriptions = Subscription::with('user')->where('status', 'active')->get();
             $formatter = $subscriptions->map(function ($subscriptions) {
                 return [
                     'name' => $subscriptions->user->name,
@@ -159,22 +160,22 @@ class SubscriptionController extends Controller
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
     }
-    public function verifySubscription($razorpaySubscriptionId)
-    {
-        $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+    // public function verifySubscription($razorpaySubscriptionId)
+    // {
+    //     $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
-        $razorpaySubscriptionId = trim((string)$razorpaySubscriptionId);
-        // dd($razorpaySubscriptionId);
-        // Fetch from Razorpay API
-        $subscription = $razorpay->subscription->fetch($razorpaySubscriptionId);
-        // dd($subscription);
-        if ($subscription->status === 'authenticated') {
-            Subscription::where('razorpay_subscription_id', 'sub_R3Zv4ABq2cx27E')
-                ->update(['status' => 'active']);
-            return $this->responseWithSuccess($subscription, 'Subscription verified successfully', 200);
-        }
-        return $this->responseWithSuccess($subscription, 'Subscription not verified', 200);
-    }
+    //     $razorpaySubscriptionId = trim((string)$razorpaySubscriptionId);
+    //     // dd($razorpaySubscriptionId);
+    //     // Fetch from Razorpay API
+    //     $subscription = $razorpay->subscription->fetch($razorpaySubscriptionId);
+    //     // dd($subscription);
+    //     if ($subscription->status === 'authenticated') {
+    //         Subscription::where('razorpay_subscription_id', 'sub_R3Zv4ABq2cx27E')
+    //             ->update(['status' => 'active']);
+    //         return $this->responseWithSuccess($subscription, 'Subscription verified successfully', 200);
+    //     }
+    //     return $this->responseWithSuccess($subscription, 'Subscription not verified', 200);
+    // }
 
     public function verifyPayment(Request $request)
     {
@@ -195,29 +196,28 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'Invalid signature'], 400);
         }
 
-        // Optional: fetch payment details from Razorpay to double-check amount/status:
-        $api = new \Razorpay\Api\Api(config('services.razorpay.key'), $secret);
+        $api = new Api(config('services.razorpay.key'), $secret);
         $payment = $api->payment->fetch($paymentId);
 
-        // find your local subscription row
         $sub = Subscription::where('razorpay_subscription_id', $subscriptionId)->first();
         if (!$sub) {
-            // handle missing subscription: log & return
             return response()->json(['message' => 'Subscription not found'], 404);
         }
 
-        // idempotency: if we've already recorded this payment, return success
-        if (SubscriptionPayment::where('payment_id', $paymentId)->exists()) {
-            return response()->json(['message' => 'Already verified'], 200);
-        }
+
+        // if (SubscriptionPayment::where('payment_id', $paymentId)->exists()) {
+        //     return response()->json(['message' => 'Already verified'], 200);
+        // }
 
         // record first payment
         SubscriptionPayment::create([
             'subscription_id' => $sub->id,
             'razorpay_payment_id' => $paymentId,
             'amount' => $payment->amount / 100,
+            'currency' => $payment->currency,
             'status' => $payment->status, // captured/authorized
             'paid_at' => now(),
+            'payload' => $payment->toArray(),
         ]);
 
         // mark subscription active locally
@@ -225,8 +225,8 @@ class SubscriptionController extends Controller
             'status' => 'active',
             'payment_id' => $paymentId,
             'start_date' => now(),
-            'next_billing_date' => now()->addMonth(), // update according to plan frequency
-            'cycles_remaining' => $sub->total_count - 1, // if you track cycles
+            'next_billing_date' => now()->addMonth(),
+            // 'cycles_remaining' => $sub->total_count - 1, // if you track cycles
         ]);
 
         // grant access to user features immediately
