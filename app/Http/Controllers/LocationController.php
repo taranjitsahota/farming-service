@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use App\Models\District;
 use App\Models\PartnerAreaCoverage;
-use Illuminate\Http\Request;
 use App\Models\State;
 use App\Models\Tehsil;
-use App\Models\ServiceArea;
 use App\Models\Village;
 
 class LocationController extends Controller

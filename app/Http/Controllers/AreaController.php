@@ -83,29 +83,36 @@ class AreaController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'tehsil_id'   => 'required|exists:tehsils,id',
-                'district_id'   => 'required|exists:districts,id',
-                'state_id'  => 'required|exists:states,id',
-                'village_id'   => 'required|exists:villages,id',
-                'substation_id'   => 'nullable|exists:substations,id',
-                'pincode'   => 'nullable|string|max:10',
-                // 'is_enabled' => 'boolean'
+            $request->validate([
+                'state_id' => 'required|exists:states,id',
+                'district_id' => 'required|exists:districts,id',
+                'tehsil_id' => 'required|exists:tehsils,id',
+                'village_ids' => 'required|array',
+                'village_ids.*' => 'exists:villages,id',
+                'substation_id' => 'nullable|exists:substations,id',
             ]);
 
-            $exists = Area::where('state_id', $validated['state_id'])
-                ->where('district_id', $validated['district_id'])
-                ->where('tehsil_id', $validated['tehsil_id'])
-                ->where('village_id', $validated['village_id'])
-                ->first();
+            $createdAreas = [];
+            foreach ($request->village_ids as $villageId) {
+                // prevent duplicates
+                $exists = Area::where('state_id', $request->state_id)
+                    ->where('district_id', $request->district_id)
+                    ->where('tehsil_id', $request->tehsil_id)
+                    ->where('village_id', $villageId)
+                    ->first();
 
-            if ($exists) {
-                return $this->responseWithError('Area already exists', 409);
+                if (!$exists) {
+                    $createdAreas[] = Area::create([
+                        'state_id' => $request->state_id,
+                        'district_id' => $request->district_id,
+                        'tehsil_id' => $request->tehsil_id,
+                        'village_id' => $villageId,
+                        'substation_id' => $request->substation_id ?? null,
+                    ]);
+                }
             }
 
-            $area = Area::create($validated);
-
-            return $this->responseWithSuccess($area, 'Area created successfully', 201);
+            return $this->responseWithSuccess($createdAreas, 'Areas created successfully', 201);
         } catch (ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
         } catch (\Exception $e) {
@@ -178,7 +185,7 @@ class AreaController extends Controller
                 // 'is_enabled' => 'sometimes'
             ]);
 
-             $exists = Area::where('state_id', $request->state_id)
+            $exists = Area::where('state_id', $request->state_id)
                 ->where('district_id', $request->district_id)
                 ->where('tehsil_id', $request->tehsil_id)
                 ->where('village_id', $request->village_id)

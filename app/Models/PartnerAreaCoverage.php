@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,5 +25,9 @@ class PartnerAreaCoverage extends Model
     public function scopeEnabled($q)
     {
         return $q->where('is_enabled', true);
+    }
+     protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
     }
 }

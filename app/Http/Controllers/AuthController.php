@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Jobs\SendOtpJob;
 use App\Models\OtpVerification;
 use App\Models\User;
-use App\Models\UserInfo;
 use App\Services\Otp\GenerateOtp;
 use App\Services\Otp\SendOtp;
 use App\Services\Otp\VerifyOtp;

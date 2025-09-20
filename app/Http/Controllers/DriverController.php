@@ -18,7 +18,19 @@ class DriverController extends Controller
     public function index()
     {
         try {
-            $data = User::role('driver')->with('partner', 'driver')->get();
+
+            $user = auth()->user();
+
+            $query = User::role('driver')->with('partner', 'driver');
+
+            if ($user->hasRole('admin')) {
+                // admin → restrict to his substation
+                $query->whereHas('driver.partner.areas', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
+            $data = $query->get();
 
             $formattedData = $data->map(function ($item) {
                 return [
@@ -70,7 +82,7 @@ class DriverController extends Controller
                 'partner_id' => $request->partner_id,
                 'license_number' => $request->license_number,
                 'experience_years' => $request->experience_years ?? 0,
-                'status' => 'active',
+                'status' => $request->experience_years ?? 'active',
             ]);
 
             return $this->responseWithSuccess($user, 'Driver created successfully', 200);
@@ -131,6 +143,8 @@ class DriverController extends Controller
                 'license_number' => $request->license_number,
                 'status' => $request->status,
             ]);
+
+            DB::commit();
 
             return $this->responseWithSuccess($driver, 'Driver updated successfully', 200);
         } catch (ValidationException $e) {

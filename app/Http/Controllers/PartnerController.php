@@ -20,7 +20,20 @@ class PartnerController extends Controller
     public function index()
     {
         try {
-            $data = User::role('partner')->with('partner', 'driver')->get();
+
+            $user = auth()->user();
+
+            $query = User::role('partner')->with('partner', 'driver');
+
+            if ($user->hasRole('admin')) {
+                // admin → restrict to his substation
+                $query->whereHas('partner.areas', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
+            $data = $query->get();
+            
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->partner->id,
@@ -73,6 +86,7 @@ class PartnerController extends Controller
                 'user_id' => $user->id,
                 'company_name' => $request->company_name,
                 'address' => $request->address,
+                'is_driver' => $request->is_driver ?? true,
                 'is_individual' => $request->is_individual ?? true,
             ]);
 
@@ -148,6 +162,7 @@ class PartnerController extends Controller
             $partner->update([
                 'company_name' => $request->company_name,
                 'address' => $request->address,
+                'is_driver' => $request->is_driver,
                 'is_individual' => $request->is_individual,
             ]);
 
@@ -161,7 +176,7 @@ class PartnerController extends Controller
                         'partner_id' => $partner->id,
                         'name'       => $request->name,
                         'phone'      => $request->phone,
-                        'is_partner' => true,
+                        // 'is_partner' => true,
                         'user_id'    => $user->id,
                     ]);
 

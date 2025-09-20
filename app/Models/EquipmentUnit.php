@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -64,14 +65,12 @@ class EquipmentUnit extends Model
         return $this->hasMany(Booking::class, 'unit_id');
     }
 
-    // Optional per-unit coverage (if you enable that table)
-    public function unitCoverages()
-    {
-        return $this->hasMany(UnitAreaCoverage::class, 'unit_id');
-    }
-
     public function scopeActive($q)
     {
         return $q->where('status', 'active');
+    }
+    protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
     }
 }

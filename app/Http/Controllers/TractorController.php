@@ -14,7 +14,19 @@ class TractorController extends Controller
     public function index()
     {
         try {
-            $data = Tractor::with('partner')->get();
+
+            $user = auth()->user();
+
+            $query = Tractor::with('partner');
+
+            if($user->hasRole('admin')) {
+                $query->whereHas('partner.areas', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
+            $data = $query->get();
+        
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->id,

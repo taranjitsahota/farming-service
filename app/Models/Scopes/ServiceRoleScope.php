@@ -38,6 +38,24 @@ class ServiceRoleScope implements Scope
                     // ->wherePivot('is_enabled', true);
                 });
             }
+            if ($model instanceof \App\Models\PartnerUnavailability) {
+                $builder->whereHas('partner', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
+            if ($model instanceof \App\Models\DriverUnavailability) {
+                $builder->whereHas('driver.partner.areas', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
+            if ($model instanceof \App\Models\EquipmentUnavailability) {
+                $builder->whereHas('unit', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
 
             if ($model instanceof \App\Models\Tractor || $model instanceof \App\Models\Driver) {
                 $builder->whereHas('partner.areas', function ($q) use ($user) {
@@ -53,7 +71,7 @@ class ServiceRoleScope implements Scope
             if ($model instanceof \App\Models\Substation) {
                 $builder->where('id', $substationId);
             }
-            if ($model instanceof \App\Models\Equipment || $model instanceof \App\Models\Service || $model instanceof \App\Models\ServiceArea) {
+            if ($model instanceof \App\Models\Equipment || $model instanceof \App\Models\Service) {
                 $builder->where('substation_id', $substationId);
             }
             if (!$substationId) {

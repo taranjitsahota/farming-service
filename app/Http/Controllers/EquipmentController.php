@@ -48,6 +48,7 @@ class EquipmentController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
         try {
             $request->validate([
                 'name' => 'required|string|unique:equipments,name|max:255',
@@ -60,7 +61,6 @@ class EquipmentController extends Controller
                 // 'inventory' => 'required|integer',
                 // 'image' => 'required|file|mimes:jpg,jpeg,png|max:2048',
             ]);
-
             // $exists = Equipment::where('name', $request->name)->where('substation_id', $request->substation_id)->exists();
             // if ($exists) {
             //     return $this->responseWithError('Equipment already exists', 422, 'equipment already exists');
@@ -76,7 +76,7 @@ class EquipmentController extends Controller
                 'name' => $request->name,
                 // 'substation_id' => $request->substation_id,
                 'service_id' => $request->service_id,
-                'service_name' => $request->service_name,
+                // 'service_name' => $request->service_name,
                 // 'price_per_kanal' => $request->price_per_kanal,
                 // 'min_kanal' => $request->min_kanal,
                 // 'is_enabled' => $request->is_enabled,
@@ -88,7 +88,7 @@ class EquipmentController extends Controller
             return $this->responseWithSuccess($equipment, 'equipment created successfully', 200);
         } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
-            return $this->responseWithError($firstError, 'equipment not updated', 422);
+            return $this->responseWithError($firstError, 422, 'equipment not updated');
         } catch (\Exception $e) {
             return $this->responseWithError($e->getMessage(), 500, 'equipment not created');
         }

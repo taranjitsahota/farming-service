@@ -12,6 +12,10 @@ class Driver extends Model
 
     protected $fillable = ['user_id', 'partner_id', 'license_number', 'experience_years', 'status'];
 
+    protected $casts = [
+        'experience_years' => 'integer',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -31,9 +35,8 @@ class Driver extends Model
     {
         return $this->hasMany(DriverUnavailability::class);
     }
-     protected static function booted()
+    protected static function booted()
     {
         static::addGlobalScope(new ServiceRoleScope);
     }
-
 }

@@ -18,4 +18,7 @@ class SavedFarm extends Model
         'category',
     ];
 
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
 }

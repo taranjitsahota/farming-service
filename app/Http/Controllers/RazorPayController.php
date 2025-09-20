@@ -9,7 +9,6 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\BookingConfirmationMail;
 use App\Models\EquipmentType;
-use App\Models\ServiceArea;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;

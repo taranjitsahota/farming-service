@@ -3,14 +3,9 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
-use App\Models\UserInfo;
-use App\Services\GenerateOtp\GenerateOtp;
-use App\Services\GenerateOtp\GenerateOtpMail;
-use App\Services\SendEmail\SendOtpEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Auth\Events\Registered;
 
 class AuthService
 {

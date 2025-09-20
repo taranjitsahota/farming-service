@@ -44,13 +44,28 @@ class EquipmentUnitController extends Controller
     {
         $request->validate([
             'partner_id' => 'required|exists:users,id',
-            'equipment_type_id' => 'required|exists:equipment_types,id',
             'substation_id' => 'required|exists:substations,id',
             'status' => 'required',
+            'equipments' => 'required|array',
+            'equipments.*.equipment_type_id' => 'required|exists:equipment_types,id',
+            'equipments.*.quantity' => 'required|integer|min:1',
         ]);
+
         try {
-            $data = EquipmentUnit::create($request->all());
-            return $this->responseWithSuccess($data, 'Equipment Unit created successfully', 200);
+            $units = [];
+
+            foreach ($request->equipments as $equipment) {
+                for ($i = 0; $i < (int) $equipment['quantity']; $i++) {
+                    $units[] = EquipmentUnit::create([
+                        'partner_id' => $request->partner_id,
+                        'substation_id' => $request->substation_id,
+                        'equipment_type_id' => $equipment['equipment_type_id'],
+                        'status' => $request->status,
+                    ]);
+                }
+            }
+
+            return $this->responseWithSuccess($units, 'Equipment Units created successfully', 200);
         } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 422);
@@ -118,16 +133,17 @@ class EquipmentUnitController extends Controller
         }
     }
 
-    public function equipmentUnitByPartnerId($id){
-        try{
-            $equipmentUnits = EquipmentUnit::where('partner_id', $id)->with(['equipmentType','equipmentType.equipment','substation','tractor'])->get()->map(function ($unit) {
-        return [
-            'id' => $unit->id,
-            'label' => $unit->equipmentType->equipment->name
+    public function equipmentUnitByPartnerId($id)
+    {
+        try {
+            $equipmentUnits = EquipmentUnit::where('partner_id', $id)->with(['equipmentType', 'equipmentType.equipment', 'substation', 'tractor'])->get()->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'label' => $unit->equipmentType->equipment->name
                         . ($unit->serial_no ? " (Serial: {$unit->serial_no})" : "")
                         . ($unit->substation ? " – {$unit->substation->name}" : ""),
-        ];
-    });
+                ];
+            });
             // $formatter = $equipmentUnits->map(function ($item) {
             //     return [
             //         'id' => $item->id,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ServiceRoleScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,5 +31,10 @@ class DriverUnavailability extends Model
     public function scopeOverlapping($q, $start, $end)
     {
         return $q->where('start_at', '<', $end)->where('end_at', '>', $start);
+    }
+
+     protected static function booted()
+    {
+        static::addGlobalScope(new ServiceRoleScope);
     }
 }

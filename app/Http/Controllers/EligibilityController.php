@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Area;
 use App\Models\PartnerAreaCoverage;
-use App\Models\ServiceArea;
 use App\Services\InterestedUsers\InterestedUsers;
 use Illuminate\Http\Request;
 

@@ -40,7 +40,7 @@ class PartnerAreaCoverageController extends Controller
                     // 'equipment_type_id' => $item->equipment_type_id,
                     // 'equipment_type_name' => $item->equipmentType->equipment->name,
                     //    'label' => $item->equipmentType->equipment->name . 
-                //    ($unit ? ' (' . $unit->serial_no . ')' : ''),
+                    //    ($unit ? ' (' . $unit->serial_no . ')' : ''),
                     'is_enabled' => $item->is_enabled
                 ];
             });
@@ -58,22 +58,29 @@ class PartnerAreaCoverageController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'partner_id' => 'required',
-            'area_id' => 'required',
-            // 'equipment_type_id' => 'required',
-            'is_enabled' => 'required|boolean'
+            'partner_id' => 'required|exists:users,id',
+            'areas' => 'required|array|min:1',
+            'areas.*' => 'required|exists:areas,id',
+            'is_enabled' => 'required|boolean',
         ]);
-        try {
-            $exists = PartnerAreaCoverage::where('partner_id', $request->partner_id)
-                ->where('area_id', $request->area_id)
-                // ->where('equipment_type_id', $request->equipment_type_id)
-                ->exists();
 
-            if ($exists) {
-                return $this->responseWithError('Partner Area Coverage already exists', 500, 'Partner Area Coverage not created');
+        try {
+            $created = [];
+            foreach ($request->areas as $areaId) {
+                $exists = PartnerAreaCoverage::where('partner_id', $request->partner_id)
+                    ->where('area_id', $areaId)
+                    ->exists();
+
+                if (!$exists) {
+                    $created[] = PartnerAreaCoverage::create([
+                        'partner_id' => $request->partner_id,
+                        'area_id' => $areaId,
+                        'is_enabled' => $request->is_enabled,
+                    ]);
+                }
             }
-            $data = PartnerAreaCoverage::create($request->all());
-            return $this->responseWithSuccess($data, 'Partner Area Coverage created successfully', 200);
+
+            return $this->responseWithSuccess($created, 'Partner Area Coverage created successfully', 200);
         } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 500, 'Partner Area Coverage not created');

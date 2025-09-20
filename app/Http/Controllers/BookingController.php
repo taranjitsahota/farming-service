@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\BusinessTiming;
 use App\Models\EquipmentType;
 use App\Models\Partner;
 use App\Models\Service;
-use App\Models\ServiceArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Traits\Subscriptions\isSubscribed;

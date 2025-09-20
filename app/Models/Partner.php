@@ -11,7 +11,7 @@ class Partner extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'company_name', 'gst_number', 'address', 'is_individual'];
+    protected $fillable = ['user_id', 'company_name', 'gst_number', 'address', 'is_driver', 'is_individual'];
 
     public function drivers()
     {
