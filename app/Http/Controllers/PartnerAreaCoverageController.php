@@ -125,12 +125,20 @@ class PartnerAreaCoverageController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'partner_id' => 'required',
-            'area_id' => 'required',
+            'partner_id' => 'sometimes|required',
+            'area_id' => 'sometimes|required',
             // 'equipment_type_id' => 'required',
             'is_enabled' => 'required|boolean'
         ]);
         try {
+            $exists = PartnerAreaCoverage::where('partner_id', $request->partner_id)
+                ->where('area_id', $request->area_id)
+                 ->where('id', '!=', $id) 
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Partner Area Coverage already exists', 500, 'Partner Area Coverage not updated');
+            }
             $partnerAreaCoverage = PartnerAreaCoverage::find($id);
             $partnerAreaCoverage->update($request->all());
             return $this->responseWithSuccess($partnerAreaCoverage, 'Partner Area Coverage updated successfully', 200);

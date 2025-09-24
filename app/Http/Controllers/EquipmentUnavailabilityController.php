@@ -14,7 +14,7 @@ class EquipmentUnavailabilityController extends Controller
     public function index()
     {
         try{
-            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.substation','unit.partner')->get();
+            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.partner')->get();
             $formatter = $equipmentUnavailability->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -23,8 +23,8 @@ class EquipmentUnavailabilityController extends Controller
                     'serial_no' => $item->unit->serial_no,
                     'equipment_type_id' => $item->unit->equipment_type_id,
                     'equipment_type_name' => $item->unit->equipmentType->equipment->name,
-                    'substation_id' => $item->unit->substation_id,
-                    'substation_name' => $item->unit->substation->name,
+                    // 'substation_id' => $item->unit->substation_id,
+                    // 'substation_name' => $item->unit->substation->name,
                     'partner_id' => $item->unit->partner_id,
                     'partner_name' => $item->unit->partner->user->name,
                     'start_at' => $item->start_at->format('Y-m-d'),
@@ -54,6 +54,24 @@ class EquipmentUnavailabilityController extends Controller
             'reason' => 'required',
         ]);
         try{
+            $equipmentUnavailability = EquipmentUnavailability::where('unit_id', $request->unit_id)
+                ->where(function ($query) use ($request) {
+                    $query->where('start_at', '<=', $request->start_at)
+                        ->where('end_at', '>=', $request->start_at);
+                })
+                // ->orWhere(function ($query) use ($request) {
+                //     $query->where('start_at', '<=', $request->end_at)
+                //         ->where('end_at', '>=', $request->end_at);
+                // })
+                ->orWhere(function ($query) use ($request) {
+                    $query->where('start_at', '>=', $request->start_at)
+                        ->where('end_at', '<=', $request->end_at);
+                })
+                ->first();
+
+            if ($equipmentUnavailability) {
+                return $this->responseWithError('Equipment Unavailability already exists', 500, 'Equipment Unavailability not created');
+            }
             $data = EquipmentUnavailability::create($request->all());
             return $this->responseWithSuccess($data, 'Equipment Unavailability created successfully', 200);
         } catch(ValidationException $e) {

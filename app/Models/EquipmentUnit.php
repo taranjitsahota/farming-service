@@ -24,15 +24,23 @@ class EquipmentUnit extends Model
             $count = EquipmentUnit::where('equipment_type_id', $unit->equipment_type_id)->count() + 1;
 
             // Generate serial number (prefix + padded counter)
-            $unit->serial_no = $prefix . str_pad($count, 4, '0', STR_PAD_LEFT); 
+            $unit->serial_no = $prefix . str_pad($count, 4, '0', STR_PAD_LEFT);
             // e.g. "SUP0001"
+        });
+
+        static::updating(function ($unit) {
+            if ($unit->isDirty('equipment_type_id')) {   // only regenerate if type changes
+                $prefix = strtoupper(substr($unit->equipmentType->equipment->name ?? 'EQ', 0, 3));
+                $count = EquipmentUnit::where('equipment_type_id', $unit->equipment_type_id)->count() + 1;
+                $unit->serial_no = $prefix . str_pad($count, 4, '0', STR_PAD_LEFT);
+            }
         });
     }
 
     protected $fillable = [
         'partner_id',
         'equipment_type_id',
-        'substation_id',
+        // 'substation_id',
         // 'tractor_id',
         'serial_no',
         'status',
@@ -48,10 +56,10 @@ class EquipmentUnit extends Model
     {
         return $this->belongsTo(EquipmentType::class);
     }
-    public function substation()
-    {
-        return $this->belongsTo(Substation::class);
-    }
+    // public function substation()
+    // {
+    //     return $this->belongsTo(Substation::class);
+    // }
     public function tractor()
     {
         return $this->belongsTo(Tractor::class);

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
             $table->foreignId('equipment_id')->nullable()->constrained('equipments')->nullOnDelete();
             $table->boolean('requires_tractor')->default(true)->index();
-            $table->boolean('is_self_propelled')->default(false)->index();
+            // $table->boolean('is_self_propelled')->default(false)->index();
             $table->unsignedInteger('minutes_per_kanal')->default(4);
             $table->decimal('price_per_kanal', 8, 2)->default(0);
             $table->unsignedInteger('min_kanal')->default(0);

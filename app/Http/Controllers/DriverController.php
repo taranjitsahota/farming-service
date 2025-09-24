@@ -21,8 +21,8 @@ class DriverController extends Controller
 
             $user = auth()->user();
 
-            $query = User::role('driver')->with('partner', 'driver');
-
+            $query = User::role('driver')->whereHas('driver')->with('partner', 'driver');
+            // dd($query);
             if ($user->hasRole('admin')) {
                 // admin → restrict to his substation
                 $query->whereHas('driver.partner.areas', function ($q) use ($user) {
@@ -31,7 +31,7 @@ class DriverController extends Controller
             }
 
             $data = $query->get();
-
+            // dd($data);
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->driver->id,

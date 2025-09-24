@@ -26,20 +26,26 @@ class ServiceRoleScope implements Scope
         }
 
         if ($user->hasRole('admin')) {
-            if ($model instanceof \App\Models\Substation) {
-                $builder->where('id', $user->substation_id);
-            }
-            if ($model instanceof \App\Models\Area || $model instanceof \App\Models\Booking || $model instanceof \App\Models\EquipmentUnit) {
+
+            if ($model instanceof \App\Models\Area || $model instanceof \App\Models\Booking) {
                 $builder->where('substation_id', $user->substation_id);
             }
+
+            if ($model instanceof \App\Models\EquipmentUnit) {
+                $builder->whereHas('partner.areas', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
+
             if ($model instanceof \App\Models\Partner) {
                 $builder->whereHas('areas', function ($q) use ($user) {
                     $q->where('substation_id', $user->substation_id);
                     // ->wherePivot('is_enabled', true);
                 });
             }
+
             if ($model instanceof \App\Models\PartnerUnavailability) {
-                $builder->whereHas('partner', function ($q) use ($user) {
+                $builder->whereHas('partner.areas', function ($q) use ($user) {
                     $q->where('substation_id', $user->substation_id);
                 });
             }
@@ -51,11 +57,10 @@ class ServiceRoleScope implements Scope
             }
 
             if ($model instanceof \App\Models\EquipmentUnavailability) {
-                $builder->whereHas('unit', function ($q) use ($user) {
+                $builder->whereHas('unit.partner.areas', function ($q) use ($user) {
                     $q->where('substation_id', $user->substation_id);
                 });
             }
-
 
             if ($model instanceof \App\Models\Tractor || $model instanceof \App\Models\Driver) {
                 $builder->whereHas('partner.areas', function ($q) use ($user) {

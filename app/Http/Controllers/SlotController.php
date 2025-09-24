@@ -223,10 +223,10 @@ class SlotController extends Controller
             $availableDrivers = $partner->drivers->count();
             $availableEquipment = $partner->units->count();
             // dd($availableDrivers, $availableEquipment);
-            if ($equipmentType->is_self_propelled) {
-                // For self-propelled equipment: capacity = min(drivers, equipment)
-                $partnerCapacity = min($availableDrivers, $availableEquipment);
-            } else if ($equipmentType->requires_tractor) {
+            // if ($equipmentType->is_self_propelled) {
+            //     // For self-propelled equipment: capacity = min(drivers, equipment)
+            //     $partnerCapacity = min($availableDrivers, $availableEquipment);
+           if ($equipmentType->requires_tractor) {
                 // For tractor-required equipment: capacity = min(drivers, tractors, equipment)
                 $availableTractors = $partner->tractors->count();
                 // dd($availableTractors, $availableDrivers, $availableEquipment);

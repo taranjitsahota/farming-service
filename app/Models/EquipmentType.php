@@ -15,7 +15,7 @@ class EquipmentType extends Model
         'service_id',
         'equipment_id',
         'requires_tractor',
-        'is_self_propelled',
+        // 'is_self_propelled',
         'minutes_per_kanal',
         'min_kanal',
         'price_per_kanal',

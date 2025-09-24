@@ -33,7 +33,7 @@ class PartnerController extends Controller
             }
 
             $data = $query->get();
-            
+
             $formattedData = $data->map(function ($item) {
                 return [
                     'id' => $item->partner->id,
@@ -133,9 +133,9 @@ class PartnerController extends Controller
     public function update(Request $request, string $id)
     {
         $partner = Partner::findOrFail($id);
-
         $userId = $partner->user_id;
 
+        // Basic validation for partner/user fields
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $userId,
@@ -148,8 +148,7 @@ class PartnerController extends Controller
         DB::beginTransaction();
 
         try {
-
-            $user = $partner->user; // assuming Partner belongsTo User
+            $user = $partner->user;
 
             // Update user
             $user->update([
@@ -157,6 +156,17 @@ class PartnerController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
             ]);
+
+            // Check if is_driver changed from 0 → 1
+            $driverChangedToYes = !$partner->is_driver && $request->boolean('is_driver');
+
+            if ($driverChangedToYes) {
+                // Validate license & experience because it's now becoming a driver
+                $request->validate([
+                    'license_number' => 'required|unique:drivers,license_number',
+                    'experience_years' => 'required|numeric',
+                ]);
+            }
 
             // Update partner
             $partner->update([
@@ -166,25 +176,33 @@ class PartnerController extends Controller
                 'is_individual' => $request->is_individual,
             ]);
 
-            // Handle driver status
             $driver = Driver::where('partner_id', $partner->id)->first();
 
             if ($request->boolean('is_driver')) {
                 if (!$driver) {
-                    // Create driver if not exists
+                    // Create driver if not exists (must provide license & experience)
                     Driver::create([
                         'partner_id' => $partner->id,
-                        'name'       => $request->name,
-                        'phone'      => $request->phone,
-                        // 'is_partner' => true,
-                        'user_id'    => $user->id,
+                        'user_id' => $user->id,
+                        'name' => $request->name,
+                        'phone' => $request->phone,
+                        'license_number' => $request->license_number,
+                        'experience_years' => $request->experience_years,
+                        'status' => 'active',
                     ]);
 
                     $user->assignRole('driver');
+                } else {
+                    // Existing driver → update only if fields provided
+                    $driver->update([
+                        'license_number' => $request->license_number ?? $driver->license_number,
+                        'experience_years' => $request->experience_years ?? $driver->experience_years,
+                        'status' => $driver->status ?? 'active',
+                    ]);
                 }
             } else {
                 if ($driver) {
-                    // Remove driver if already exists
+                    // Remove driver if it exists
                     $driver->delete();
                     $user->removeRole('driver');
                 }

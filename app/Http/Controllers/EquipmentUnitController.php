@@ -23,8 +23,8 @@ class EquipmentUnitController extends Controller
                     'user_name' => $item->partner->user->name,
                     'equipment_type_id' => $item->equipment_type_id,
                     'equipment_type_name' => $item->equipmentType->equipment->name,
-                    'substation_id' => $item->substation_id,
-                    'substation_name' => $item->substation->name,
+                    // 'substation_id' => $item->substation_id,
+                    // 'substation_name' => $item->substation->name,
                     // 'tractor_id' => $item->tractor_id,
                     // 'tractor_name' => $item->tractor->name,
                     'serial_no' => $item->serial_no,
@@ -44,7 +44,7 @@ class EquipmentUnitController extends Controller
     {
         $request->validate([
             'partner_id' => 'required|exists:users,id',
-            'substation_id' => 'required|exists:substations,id',
+            // 'substation_id' => 'required|exists:substations,id',
             'status' => 'required',
             'equipments' => 'required|array',
             'equipments.*.equipment_type_id' => 'required|exists:equipment_types,id',
@@ -58,7 +58,7 @@ class EquipmentUnitController extends Controller
                 for ($i = 0; $i < (int) $equipment['quantity']; $i++) {
                     $units[] = EquipmentUnit::create([
                         'partner_id' => $request->partner_id,
-                        'substation_id' => $request->substation_id,
+                        // 'substation_id' => $request->substation_id,
                         'equipment_type_id' => $equipment['equipment_type_id'],
                         'status' => $request->status,
                     ]);
@@ -86,7 +86,7 @@ class EquipmentUnitController extends Controller
                 'partner_id' => $equipmentUnit->partner_id,
                 'user_name' => $equipmentUnit->users->name,
                 'equipment_type_id' => $equipmentUnit->equipment_type_id,
-                'substation_id' => $equipmentUnit->substation_id,
+                // 'substation_id' => $equipmentUnit->substation_id,
                 'serial_no' => $equipmentUnit->serial_no,
                 'status' => $equipmentUnit->status,
             ];
@@ -104,7 +104,7 @@ class EquipmentUnitController extends Controller
         $request->validate([
             'partner_id' => 'required|exists:users,id',
             'equipment_type_id' => 'required|exists:equipment_types,id',
-            'substation_id' => 'required|exists:substations,id',
+            // 'substation_id' => 'required|exists:substations,id',
             'status' => 'required',
         ]);
         try {
@@ -136,12 +136,12 @@ class EquipmentUnitController extends Controller
     public function equipmentUnitByPartnerId($id)
     {
         try {
-            $equipmentUnits = EquipmentUnit::where('partner_id', $id)->with(['equipmentType', 'equipmentType.equipment', 'substation', 'tractor'])->get()->map(function ($unit) {
+            $equipmentUnits = EquipmentUnit::where('partner_id', $id)->with(['equipmentType', 'equipmentType.equipment', 'tractor'])->get()->map(function ($unit) {
                 return [
                     'id' => $unit->id,
                     'label' => $unit->equipmentType->equipment->name
                         . ($unit->serial_no ? " (Serial: {$unit->serial_no})" : "")
-                        . ($unit->substation ? " – {$unit->substation->name}" : ""),
+                        // . ($unit->substation ? " – {$unit->substation->name}" : ""),
                 ];
             });
             // $formatter = $equipmentUnits->map(function ($item) {

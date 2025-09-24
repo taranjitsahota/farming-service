@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
             $table->foreignId('equipment_type_id')->constrained('equipment_types')->cascadeOnDelete();
-            $table->foreignId('substation_id')->nullable()->constrained('substations')->nullOnDelete();
+            // $table->foreignId('substation_id')->nullable()->constrained('substations')->nullOnDelete();
             // If permanently mounted on a tractor:
             // $table->foreignId('tractor_id')->nullable()->constrained('tractors')->nullOnDelete();
             $table->string('serial_no')->nullable()->unique();
