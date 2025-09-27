@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EquipmentUnavailability;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class EquipmentUnavailabilityController extends Controller
@@ -13,8 +14,8 @@ class EquipmentUnavailabilityController extends Controller
      */
     public function index()
     {
-        try{
-            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.partner')->get();
+        try {
+            $equipmentUnavailability = EquipmentUnavailability::with('unit', 'unit.equipmentType', 'unit.partner')->get();
             $formatter = $equipmentUnavailability->map(function ($item) {
                 return [
                     'id' => $item->id,
@@ -46,26 +47,19 @@ class EquipmentUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'partner_id' => 'required|exists:partners,id',
             'unit_id' => 'required|exists:equipment_units,id',
-            'start_at' => 'required',
-            'end_at' => 'required',
-            'leave_type'=> 'required',
-            'shift'=> 'sometimes|required',
-            'reason' => 'required',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
-        try{
+        try {
             $equipmentUnavailability = EquipmentUnavailability::where('unit_id', $request->unit_id)
                 ->where(function ($query) use ($request) {
                     $query->where('start_at', '<=', $request->start_at)
                         ->where('end_at', '>=', $request->start_at);
-                })
-                // ->orWhere(function ($query) use ($request) {
-                //     $query->where('start_at', '<=', $request->end_at)
-                //         ->where('end_at', '>=', $request->end_at);
-                // })
-                ->orWhere(function ($query) use ($request) {
-                    $query->where('start_at', '>=', $request->start_at)
-                        ->where('end_at', '<=', $request->end_at);
                 })
                 ->first();
 
@@ -74,7 +68,7 @@ class EquipmentUnavailabilityController extends Controller
             }
             $data = EquipmentUnavailability::create($request->all());
             return $this->responseWithSuccess($data, 'Equipment Unavailability created successfully', 200);
-        } catch(ValidationException $e) {
+        } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 500, 'Equipment Unavailability not created');
         } catch (\Exception $e) {
@@ -87,8 +81,8 @@ class EquipmentUnavailabilityController extends Controller
      */
     public function show(string $id)
     {
-        try{
-            $equipmentUnavailability = EquipmentUnavailability::with('unit','unit.equipmentType','unit.substation','unit.tractor','unit.partner')->find($id);
+        try {
+            $equipmentUnavailability = EquipmentUnavailability::with('unit', 'unit.equipmentType', 'unit.substation', 'unit.tractor', 'unit.partner')->find($id);
             $formatter = [
                 'id' => $equipmentUnavailability->id,
                 'unit_id' => $equipmentUnavailability->unit_id,
@@ -117,16 +111,35 @@ class EquipmentUnavailabilityController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'unit_id' => 'required',
-            'start_at' => 'required',
-            'end_at' => 'required',
-            'reason' => 'required',
+            'unit_id' => 'required|exists:equipment_units,id',
+            'partner_id' => 'required|exists:partners,id',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
-        try{
+        try {
+
+            $startDate = Carbon::parse($request->start_at)->startOfDay();
+            $endDate   = Carbon::parse($request->end_at)->endOfDay();
+
+            $exists = EquipmentUnavailability::where('unit_id', $request->unit_id)
+                ->where('id', '!=', $id)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_at', '<=', $endDate)
+                        ->where('end_at', '>=', $startDate);
+                })
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Equipment Unavailability already exists', 422);
+            }
+
             $equipmentUnavailability = EquipmentUnavailability::find($id);
             $equipmentUnavailability->update($request->all());
             return $this->responseWithSuccess($equipmentUnavailability, 'Equipment Unavailability updated successfully', 200);
-        } catch(ValidationException $e) {
+        } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 500, 'Equipment Unavailability not updated');
         } catch (\Exception $e) {
@@ -139,7 +152,7 @@ class EquipmentUnavailabilityController extends Controller
      */
     public function destroy(string $id)
     {
-        try{
+        try {
             $equipmentUnavailability = EquipmentUnavailability::find($id);
             $equipmentUnavailability->delete();
             return $this->responseWithSuccess($equipmentUnavailability, 'Equipment Unavailability deleted successfully', 200);

@@ -17,9 +17,9 @@ class Booking extends Model
         'area_id', 
         'equipment_type_id',
         'partner_id',
-        'assigned_driver_id',
-        'assigned_tractor_id', 
-        'assigned_equipment_unit_id',
+        'driver_id',
+        'tractor_id', 
+        'equipment_unit_id',
         'substation_id',
         'crop_id',
         'land_area',
@@ -48,8 +48,8 @@ class Booking extends Model
 
     protected $casts = [
         'slot_date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i', 
+        // 'start_time' => 'datetime:Y-m-d H:i',
+        // 'end_time' => 'datetime:Y-m-d H:i', 
         'land_area' => 'decimal:2',
         'price' => 'decimal:2',
         'price_per_kanal' => 'decimal:2',

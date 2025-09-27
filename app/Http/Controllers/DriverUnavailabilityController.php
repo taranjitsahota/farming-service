@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DriverUnavailability;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class DriverUnavailabilityController extends Controller
@@ -27,7 +28,7 @@ class DriverUnavailabilityController extends Controller
                     'shift' => $item->shift,
                     'leave_type' => $item->leave_type,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
-                    'end_at' => $item->end_at ? $item->start_at->format('Y-m-d') : null,
+                    'end_at' => $item->end_at ? $item->end_at->format('Y-m-d') : null,
                     'reason' => $item->reason,
                     'created_at' => $item->created_at,
                     'updated_at' => $item->updated_at,
@@ -45,22 +46,32 @@ class DriverUnavailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'partner_id' => 'required|exists:partners,id', 
+            'partner_id' => 'required|exists:partners,id',
             'driver_id' => 'required|exists:drivers,id',
-            'start_at' => 'required',
-            'shift' => 'sometimes|required',
-            'leave_type' => 'required',
-            'end_at' => 'required',
-            'reason' => 'nullable',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
-        try{
+        try {
+
+            $exists = DriverUnavailability::where('driver_id', $request->driver_id)
+                ->where('start_at', '<=', $request->start_at)
+                ->where('end_at', '>=', $request->end_at)
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Driver Unavailability already exists', 422);
+            }
+
             $data = DriverUnavailability::create($request->all());
             return $this->responseWithSuccess($data, 'Driver Unavailability created successfully', 200);
         } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 'Driver Unavailability create failed', 422);
         } catch (Exception $e) {
-            return $this->responseWithError($e->getMessage(),500, 'Driver Unavailability create failed');
+            return $this->responseWithError($e->getMessage(), 500, 'Driver Unavailability create failed');
         }
     }
 
@@ -69,11 +80,11 @@ class DriverUnavailabilityController extends Controller
      */
     public function show(string $id)
     {
-        try{
-        $driverUnavailabilities = DriverUnavailability::find($id);
-        return $this->responseWithSuccess($driverUnavailabilities, 'Driver Unavailability fetched successfully', 200);
+        try {
+            $driverUnavailabilities = DriverUnavailability::find($id);
+            return $this->responseWithSuccess($driverUnavailabilities, 'Driver Unavailability fetched successfully', 200);
         } catch (Exception $e) {
-            return $this->responseWithError($e->getMessage(), 500 , 'Driver Unavailability fetch failed');
+            return $this->responseWithError($e->getMessage(), 500, 'Driver Unavailability fetch failed');
         }
     }
 
@@ -83,20 +94,38 @@ class DriverUnavailabilityController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'driver_id' => 'required',
-            'start_at' => 'required',
-            'end_at' => 'required',
-            'reason' => 'nullable',
+            'driver_id' => 'required|exists:drivers,id',
+            'partner_id' => 'required|exists:partners,id',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
-        try{
+        try {
+
+            $startDate = Carbon::parse($request->start_at)->startOfDay();
+            $endDate   = Carbon::parse($request->end_at)->endOfDay();
             $driverUnavailabilities = DriverUnavailability::find($id);
+
+            $exists = DriverUnavailability::where('driver_id', $request->driver_id)
+                ->where('id', '!=', $id)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_at', '<=', $endDate)
+                        ->where('end_at', '>=', $startDate);
+                })
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Driver Unavailability already exists', 422);
+            }
             $driverUnavailabilities->update($request->all());
             return $this->responseWithSuccess($driverUnavailabilities, 'Driver Unavailability updated successfully', 200);
         } catch (ValidationException $e) {
             $firstError = $e->validator->errors()->first();
             return $this->responseWithError($firstError, 'Driver Unavailability update failed', 422);
         } catch (Exception $e) {
-            return $this->responseWithError($e->getMessage(), 500 , 'Driver Unavailability update failed');
+            return $this->responseWithError($e->getMessage(), 500, 'Driver Unavailability update failed');
         }
     }
 
@@ -105,12 +134,12 @@ class DriverUnavailabilityController extends Controller
      */
     public function destroy(string $id)
     {
-        try{
+        try {
             $driverUnavailabilities = DriverUnavailability::find($id);
             $driverUnavailabilities->delete();
             return $this->responseWithSuccess($driverUnavailabilities, 'Driver Unavailability deleted successfully', 200);
         } catch (Exception $e) {
-            return $this->responseWithError($e->getMessage(), 500 , 'Driver Unavailability delete failed');
+            return $this->responseWithError($e->getMessage(), 500, 'Driver Unavailability delete failed');
         }
     }
 }

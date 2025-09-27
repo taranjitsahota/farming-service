@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PartnerUnavailability;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class PartnerUnavailabilityController extends Controller
@@ -23,7 +24,7 @@ class PartnerUnavailabilityController extends Controller
                     'leave_type' => $item->leave_type,
                     'shift' => $item->shift,
                     'start_at' => $item->start_at ? $item->start_at->format('Y-m-d') : null,
-                    'end_at' => $item->end_at ? $item->start_at->format('Y-m-d') : null,
+                    'end_at' => $item->end_at ? $item->end_at->format('Y-m-d') : null,
                     'reason' => $item->reason,
                 ];
             });
@@ -40,13 +41,22 @@ class PartnerUnavailabilityController extends Controller
     {
         $request->validate([
             'partner_id' => 'required|exists:partners,id',
-            'leave_type' => 'required',
-            'shift' => 'sometimes|required',
-            'start_at' => 'required',
-            'end_at' => 'required',
-            'reason' => 'required',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
         try {
+            $exists = PartnerUnavailability::where('partner_id', $request->partner_id)
+                ->where('start_at', '<=', $request->start_at)
+                ->where('end_at', '>=', $request->end_at)
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Partner Unavailability already exists', 422);
+            }
+
             $data = PartnerUnavailability::create($request->all());
             return $this->responseWithSuccess($data, 'Partner Unavailability created successfully', 200);
         } catch (ValidationException $e) {
@@ -76,14 +86,32 @@ class PartnerUnavailabilityController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'partner_id' => 'required',
-            'start_at' => 'required',
-            'end_at' => 'required',
-            'reason' => 'required',
+            'partner_id' => 'required|exists:partners,id',
+            'leave_type' => 'required|in:single_day,shift,long_leave',
+            'shift' => 'required_if:leave_type,shift|nullable|in:first,second',
+            'start_at' => 'required|date',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'reason' => 'required|string',
         ]);
 
         try {
-            $data = PartnerUnavailability::find($id);
+
+            $startDate = Carbon::parse($request->start_at)->startOfDay();
+            $endDate   = Carbon::parse($request->end_at)->endOfDay();
+            $data = PartnerUnavailability::findOrFail($id);
+
+            $exists = PartnerUnavailability::where('partner_id', $request->partner_id)
+                ->where('id', '!=', $id)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_at', '<=', $endDate)
+                        ->where('end_at', '>=', $startDate);
+                })
+                ->exists();
+
+            if ($exists) {
+                return $this->responseWithError('Partner Unavailability already exists', 422);
+            }
+
             $data->update($request->all());
             return $this->responseWithSuccess($data, 'Partner Unavailability updated successfully', 200);
         } catch (ValidationException $e) {

@@ -90,7 +90,6 @@ class BookingController extends Controller
                     'amount' => $booking->price,
                     'duration' => $booking->duration_minutes,
                     'area' => $booking->area,
-
                     'created_at' => $booking->created_at->format('Y-m-d'),
 
 
@@ -107,7 +106,7 @@ class BookingController extends Controller
     public function getPendingBookings()
     {
         try {
-            $bookings = Booking::where('booking_status', 'pending')->with('servicearea')->with('servicearea.equipment')->with('user')->with('crop')->get();
+            $bookings = Booking::where('booking_status', 'pending')->with('user', 'equipmentType', 'crop', 'area')->get();
 
             $formatted = $bookings->map(function ($booking) {
                 return [
@@ -115,27 +114,34 @@ class BookingController extends Controller
                     'user_id' => $booking->user_id,
                     'user_name' => $booking->user->name,
                     'phone' => $booking->user->phone,
-                    'pin_code' => $booking->user->userInfo->pin_code ?? '',
+                    'email' => $booking->user->email ?? '',
                     'address' => $booking->address,
                     'land_area' => $booking->land_area,
-                    'equipment' => $booking->servicearea->equipment,
+                    'equipment_name' => $booking->equipmentType->equipment->name,
                     'user_note' => $booking->user_note,
                     'crop_id' => $booking->crop_id,
                     'crop_name' => $booking->crop->name,
-                    'equipment_name' => $booking->servicearea->equipment->name,
-                    'servicearea_id' => $booking->servicearea_id,
-                    'date' => $booking->slot_date,
+                    'area' => $booking->area->village->name,
+                    // 'equipment_name' => $booking->servicearea->equipment->name,
+                    'service_name' => $booking->equipmentType->service->name,
+                    'date' => $booking->slot_date->format('Y-m-d'),
                     'start_time' => $booking->start_time,
                     'end_time' => $booking->end_time,
-                    'status' => $booking->status,
+                    'payment_status' => $booking->payment_status,
                     'booking_status' => $booking->booking_status,
                     'amount' => $booking->price,
-                    'duration' => $booking->duration,
-                    'area' => $booking->area,
-
+                    'duration' => $booking->duration_minutes,
+                    'substation' => $booking->substation->name,
+                    'payment_method' => $booking->payment_method,
                     'created_at' => $booking->created_at->format('Y-m-d'),
-
-
+                    'paid_at' => $booking->paid_at->format('Y-m-d'),
+                    'partner_id' => $booking->partner_id,
+                    'driver_id' => $booking->driver_id,
+                    'tractor_id' => $booking->tractor_id,
+                    'equipment_unit_id' => $booking->equipment_unit_id,
+                    'admin_note' => $booking->admin_note,
+                    'lattitude' => $booking->latitude,
+                    'longitude' => $booking->longitude
                 ];
             });
 
@@ -309,7 +315,7 @@ class BookingController extends Controller
                 'crop_id' => 'required|exists:crops,id',
                 'area_id' => 'required|exists:areas,id',
                 'equipment_type_id' => 'required|exists:equipment_types,id',
-                // 'substation_id' => 'nullable|exists:substations,id',
+                'substation_id' => 'required|exists:substations,id',
                 'address' => 'nullable|string',
                 'latitude' => 'nullable|numeric',
                 'longitude' => 'nullable|numeric',
@@ -323,7 +329,7 @@ class BookingController extends Controller
             $slotDate = $request->slot_date;
             $startTime = $request->start_time;
 
-            if($slotDate < now()->format('Y-m-d')) {
+            if ($slotDate < now()->format('Y-m-d')) {
                 return $this->responseWithError('Selected date is in the past', 422);
             }
 
@@ -387,7 +393,7 @@ class BookingController extends Controller
                 // 'driver_id' => $availableResources['driver_id'],
                 // 'tractor_id' => $availableResources['tractor_id'], // null for self-propelled
                 // 'equipment_unit_id' => $availableResources['equipment_unit_id'],
-                // 'substation_id' => $request->substation_id,
+                'substation_id' => $request->substation_id,
                 'crop_id' => $request->crop_id,
                 'land_area' => $areaOfLand,
                 'slot_date' => $slotDate,
@@ -614,6 +620,34 @@ class BookingController extends Controller
             return $this->responseWithSuccess($booking, "Booking cancelled successfully. Refund Type: {$refundType}", 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $this->responseWithError('Validation failed', 422, $e->errors());
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function assignBookings(Request $request)
+    {
+        try {
+            $request->validate([
+                'booking_id' => 'required|exists:bookings,id',
+                'partner_id' => 'required|exists:partners,id',
+                'driver_id' => 'required|exists:drivers,id',
+                'tractor_id' => 'required|exists:tractors,id',
+                'equipment_unit_id' => 'required|exists:equipment_units,id'
+            ]);
+
+            $booking = Booking::find($request->booking_id);
+            $booking->partner_id = $request->partner_id;
+            $booking->driver_id = $request->driver_id;
+            $booking->tractor_id = $request->tractor_id;
+            $booking->equipment_unit_id = $request->equipment_unit_id;
+            $booking->admin_note = $request->admin_note;
+            $booking->save();
+
+            return $this->responseWithSuccess($booking, "Booking assigned successfully", 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->errors();
+            return $this->responseWithError('Validation failed', 422, $errors);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

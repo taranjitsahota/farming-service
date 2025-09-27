@@ -12,6 +12,7 @@ use App\Models\EquipmentType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class RazorPayController extends Controller
 {
@@ -60,14 +61,8 @@ class RazorPayController extends Controller
 
     public function verifyPayment(Request $request)
     {
-        DB::beginTransaction();
 
-        $request->validate([
-            'razorpay_payment_id' => 'required',
-            'razorpay_order_id' => 'required',
-            'booking_id' => 'required|exists:bookings,id',
-            // 'substation_id' => 'required|exists:substations,id'
-        ]);
+      
         try {
             $api = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
             $payment = $api->payment->fetch($request->razorpay_payment_id);
@@ -104,6 +99,7 @@ class RazorPayController extends Controller
                     'payment_status' => 'confirmed',
                     'payment_id' => $request->razorpay_payment_id,
                     'payment_method' => 'razorpay',
+                    'reserved_until' => null,   
                     'paid_at' => now()
                 ]);
 
@@ -113,14 +109,15 @@ class RazorPayController extends Controller
                 // Notification::send($booking->user, new BookingPaid($booking));
                 // Mail::to($user->email)->send(new BookingConfirmationMail($booking));
 
-                DB::commit();
 
                 return $this->responseWithSuccess(null, 'Payment verified & booking confirmed', 200);
             }
 
             return $this->responseWithError('Payment not captured', 400);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch(ValidationException $e){
+            return $this->responseWithError($e->validator->errors()->first(), 422);
+        }
+            catch (\Exception $e) {
             return $this->responseWithError('Payment verification failed', 500, $e->getMessage());
         }
     }

@@ -12,6 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/cancel-booking', [BookingController::class, 'cancelBooking']);
         Route::get('/get-all-bookings', [BookingController::class, 'getAllBookings']);
         Route::get('/get-pending-bookings', [BookingController::class, 'getPendingBookings']);
+        Route::put('/assign-booking', [BookingController::class, 'assignBookings']);
         Route::apiResource('bookings', BookingController::class);
     });
 });

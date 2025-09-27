@@ -70,18 +70,18 @@ class ServiceRoleScope implements Scope
             }
         }
 
-        if ($user->hasRole('farmer')) {
-            $substationId = Request::get('substation_id');
+        // if ($user->hasRole('farmer')) {
+        //     $substationId = Request::get('substation_id');
 
-            if ($model instanceof \App\Models\Substation) {
-                $builder->where('id', $substationId);
-            }
-            if ($model instanceof \App\Models\Equipment || $model instanceof \App\Models\Service) {
-                $builder->where('substation_id', $substationId);
-            }
-            if (!$substationId) {
-                throw new HttpException(422, 'The substation_id field is required.');
-            }
-        }
+        //     if ($model instanceof \App\Models\Substation) {
+        //         $builder->where('id', $substationId);
+        //     }
+        //     if ($model instanceof \App\Models\Equipment || $model instanceof \App\Models\Service) {
+        //         $builder->where('substation_id', $substationId);
+        //     }
+        //     if (!$substationId) {
+        //         throw new HttpException(422, 'The substation_id field is required.');
+        //     }
+        // }
     }
 }
