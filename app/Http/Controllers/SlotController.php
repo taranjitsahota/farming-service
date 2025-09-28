@@ -68,12 +68,12 @@ class SlotController extends Controller
     public function getAvailableSlots(Request $request)
     {
         try {
-            $request->validate([
-                'date' => 'required|date',
-                'equipment_type_id' => 'required|exists:equipment_types,id',
-                'area_of_land' => 'required|min:1',
-                'area_id' => 'required|exists:areas,id'
-            ]);
+            // $request->validate([
+            //     'date' => 'required|date',
+            //     'equipment_type_id' => 'required|exists:equipment_types,id',
+            //     'area_of_land' => 'required|min:1',
+            //     'area_id' => 'required|exists:areas,id'
+            // ]);
 
             $date = Carbon::parse($request->date)->startOfDay();
             $dayOfWeek = $date->format('l');
