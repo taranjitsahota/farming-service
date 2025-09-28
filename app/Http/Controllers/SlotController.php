@@ -74,7 +74,7 @@ class SlotController extends Controller
             //     'area_of_land' => 'required|min:1',
             //     'area_id' => 'required|exists:areas,id'
             // ]);
-
+            return $this->responseWithSuccess([], 'Success', 200);
             $date = Carbon::parse($request->date)->startOfDay();
             $dayOfWeek = $date->format('l');
             $area_of_land = $request->area_of_land;
