@@ -71,7 +71,7 @@ class SlotController extends Controller
             $request->validate([
                 'date' => 'required|date',
                 'equipment_type_id' => 'required|exists:equipment_types,id',
-                'area_of_land' => 'required|numeric|min:1',
+                'area_of_land' => 'required|min:1',
                 'area_id' => 'required|exists:areas,id'
             ]);
 
