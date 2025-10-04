@@ -642,6 +642,7 @@ class BookingController extends Controller
             $booking->tractor_id = $request->tractor_id;
             $booking->equipment_unit_id = $request->equipment_unit_id;
             $booking->admin_note = $request->admin_note;
+            $booking->booking_status = "confirmed";
             $booking->save();
 
             return $this->responseWithSuccess($booking, "Booking assigned successfully", 200);

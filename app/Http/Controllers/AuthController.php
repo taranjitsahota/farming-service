@@ -292,7 +292,7 @@ class AuthController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'phone' => 'required|unique:users,phone|regex:/^\d{5,15}$/',
-                'email' => 'nullable|email',
+                'email' => 'nullable|email|unique:users,email|max:255',
                 'pin' => 'required|min:6|confirmed',
             ], [
                 'phone.unique' => 'You are already registered.',
