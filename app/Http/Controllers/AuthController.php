@@ -719,7 +719,8 @@ class AuthController extends Controller
 
             return $this->responseWithSuccess([], 'Password updated successfully. Proceed to Login', 200);
         } catch (\Illuminate\Validation\ValidationException $th) {
-            return $this->responseWithError('Validation failed', 422, $th->validator->errors());
+            $firstError = collect($th->validator->errors()->all())->first();
+            return $this->responseWithError($firstError, 422, $th->validator->errors());
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
