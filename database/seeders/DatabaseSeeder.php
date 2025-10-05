@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Equipment;
 use App\Models\User;
+use GuzzleHttp\Promise\Is;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -25,6 +26,9 @@ class DatabaseSeeder extends Seeder
             EquipmentSeeder::class,
             CropSeeder::class,
             VillagesImportSeeder::class,
+            IssueTypesSeeder::class,
+            FaqsSeeder::class,
+            SupportContactSeeder::class
         ]);
 
         $superadminRole = Role::where('name', 'superadmin')->first();

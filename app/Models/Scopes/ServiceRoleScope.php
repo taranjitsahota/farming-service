@@ -68,6 +68,11 @@ class ServiceRoleScope implements Scope
                     // ->wherePivot('is_enabled', true);
                 });
             }
+            if ($model instanceof \App\Models\PartnerAreaCoverage) {
+                $builder->whereHas('area', function ($q) use ($user) {
+                    $q->where('substation_id', $user->substation_id);
+                });
+            }
         }
 
         // if ($user->hasRole('farmer')) {
