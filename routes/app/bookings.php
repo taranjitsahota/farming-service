@@ -10,6 +10,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bookings/getEstimatedPayment', [BookingController::class, 'getEstimatedPayment']);
         Route::post('/cancel-booking', [BookingController::class, 'cancelBooking']);
         Route::apiResource('bookings', BookingController::class);
+        Route::get('/get-user-bookings', [BookingController::class, 'getUserBookings']);
         
     });
 

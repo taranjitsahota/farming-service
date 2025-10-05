@@ -64,6 +64,32 @@ class BookingController extends Controller
      */
     public function destroy(string $id) {}
 
+    public function getUserBookings(){
+        try {
+            $user = auth()->user();
+            $bookings = Booking::where('user_id', $user->id)
+                ->with(['equipmentType', 'crop'])
+                ->get();
+
+                $formatted = $bookings->map(function ($booking) {
+                    return [
+                        'id' => $booking->id,
+                        'crop_name' => $booking->crop->name,
+                        'equipment_name' => $booking->equipmentType->equipment->name,
+                        'equipment_image' => $booking->equipmentType->image,
+                        'area' => $booking->land_area,
+                        'date' => $booking->slot_date->format('Y-m-d'),
+                        'start_time' => $booking->start_time,
+                        'end_time' => $booking->end_time,
+                    ];
+                });
+
+            return $this->responseWithSuccess($formatted, 'Bookings fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
     public function getAllBookings()
     {
         try {
