@@ -81,6 +81,7 @@ class BookingController extends Controller
                         'date' => $booking->slot_date->format('Y-m-d'),
                         'start_time' => $booking->start_time,
                         'end_time' => $booking->end_time,
+                        'booking_status' => $booking->booking_status
                     ];
                 });
 
