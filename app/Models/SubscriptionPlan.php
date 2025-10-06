@@ -8,8 +8,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SubscriptionPlan extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    protected $fillable = ['name', 'description', 'price', 'duration', 'is_active'];
-    
+    protected $fillable = [
+        'name',
+        'price_per_kanal',
+        'min_kanals',
+        'upfront_percentage',
+        'emi_months',
+        'razorpay_plan_id',
+        'services',
+        'benefits',
+        'status',
+    ];
+
+    protected $casts = [
+        'services' => 'array',
+        'benefits' => 'array',
+        'status' => 'boolean',
+    ];
 }

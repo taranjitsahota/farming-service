@@ -28,7 +28,8 @@ class DatabaseSeeder extends Seeder
             VillagesImportSeeder::class,
             IssueTypesSeeder::class,
             FaqsSeeder::class,
-            SupportContactSeeder::class
+            SupportContactSeeder::class,
+            SubscriptionPlanSeeder::class,
         ]);
 
         $superadminRole = Role::where('name', 'superadmin')->first();

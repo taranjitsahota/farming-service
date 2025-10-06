@@ -64,26 +64,27 @@ class BookingController extends Controller
      */
     public function destroy(string $id) {}
 
-    public function getUserBookings(){
+    public function getUserBookings()
+    {
         try {
             $user = auth()->user();
             $bookings = Booking::where('user_id', $user->id)
                 ->with(['equipmentType', 'crop'])
                 ->get();
 
-                $formatted = $bookings->map(function ($booking) {
-                    return [
-                        'id' => $booking->id,
-                        'crop_name' => $booking->crop->name,
-                        'equipment_name' => $booking->equipmentType->equipment->name,
-                        'equipment_image' => $booking->equipmentType->image,
-                        'area' => $booking->land_area,
-                        'date' => $booking->slot_date->format('Y-m-d'),
-                        'start_time' => $booking->start_time,
-                        'end_time' => $booking->end_time,
-                        'booking_status' => $booking->booking_status
-                    ];
-                });
+            $formatted = $bookings->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'crop_name' => $booking->crop->name,
+                    'equipment_name' => $booking->equipmentType->equipment->name,
+                    'equipment_image' => $booking->equipmentType->image,
+                    'area' => $booking->land_area,
+                    'date' => $booking->slot_date->format('Y-m-d'),
+                    'start_time' => $booking->start_time,
+                    'end_time' => $booking->end_time,
+                    'booking_status' => $booking->booking_status
+                ];
+            });
 
             return $this->responseWithSuccess($formatted, 'Bookings fetched successfully', 200);
         } catch (\Exception $e) {
@@ -600,7 +601,7 @@ class BookingController extends Controller
         try {
             $request->validate([
                 'booking_id' => 'required|exists:bookings,id',
-                'cancel_reason' => 'nullable|string|max:255',
+                'cancel_reason' => 'required|string|max:255',
             ]);
 
             $booking = Booking::find($request->booking_id);
@@ -676,6 +677,44 @@ class BookingController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             $errors = $e->errors();
             return $this->responseWithError('Validation failed', 422, $errors);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function getBookingsById($id)
+    {
+        try {
+            $booking = Booking::with('user', 'crop', 'area', 'partner', 'driver', 'tractor', 'units', 'equipmentType')->find($id);
+
+            if (!$booking) {
+                return $this->responseWithError('Booking not found!', 404);
+            }
+
+            $formatted = [
+                'id' => $booking->id,
+                'crop_name' => $booking->crop->name ?? '',
+                'service_name' => $booking->equipmentType->service->name ?? '',
+                'equipment_name' => $booking->equipmentType->equipment->name ?? '',
+                'land_area' => $booking->land_area,
+                'date' => $booking->slot_date ? $booking->slot_date->format('Y-m-d') : '',
+                'start_time' => $booking->start_time,
+                'end_time' => $booking->end_time,
+                'duration' => $booking->duration_minutes,
+                'area' => $booking->area->village->name ?? '',
+                'address' => $booking->address,
+                'lattitude' => $booking->latitude,
+                'longitude' => $booking->longitude,
+                'driver_name' => $booking->driver->user->name ?? '',
+                'driver_contact' => $booking->driver->user->phone ?? '',
+                'tractor_name' => $booking->tractor->name ?? '',
+                'booking_status' => $booking->booking_status,
+                'amount' => $booking->price,
+                'mode' => $booking->payment_method,
+                'paid_on' => $booking->paid_at->format('Y-m-d') ?? '',
+                'created_at' => $booking->created_at->format('Y-m-d') ?? '',
+            ];
+            return $this->responseWithSuccess($formatted, 'Booking fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
