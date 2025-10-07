@@ -46,15 +46,14 @@ class SubscriptionController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'subscription_plan_id' => 'required|exists:subscription_plans,id',
+            'kanals' => 'required|integer|min:4'
+        ]);
         try {
-            $request->validate([
-                'plan_id' => 'required|exists:subscription_plans,id',
-                'kanals' => 'required|integer|min:4'
-            ]);
-
             $user = auth()->user();
             $kanals = $request->kanals;
-            $plan = SubscriptionPlan::findOrFail($request->plan_id);
+            $plan = SubscriptionPlan::findOrFail($request->subscription_plan_id);
 
             if (!$plan->razorpay_plan_id) {
                 return $this->responseWithError('Plan missing Razorpay plan ID', 400);
@@ -66,7 +65,7 @@ class SubscriptionController extends Controller
 
             $subscription = $razorpay->subscription->create([
                 'plan_id' => $planId,
-                'total_count' => 11, // months
+                'total_count' => 11,
                 'quantity' => $kanals,
                 'customer_notify' => 1,
                 'start_at' => now()->addMinutes(5)->timestamp,
@@ -81,7 +80,7 @@ class SubscriptionController extends Controller
             // Save draft subscription (optional)
             Subscription::create([
                 'user_id' => $user->id,
-                'plan_id' => $plan->id,
+                'subscription_plan_id' => $plan->id,
                 'razorpay_subscription_id' => $subscription->id,
                 'land_area' => $kanals,
                 'total_price' => $amount,
@@ -101,7 +100,8 @@ class SubscriptionController extends Controller
 
             return $this->responseWithSuccess($data, 'Subscription created successfully', 200);
         } catch (ValidationException $e) {
-            return $this->responseWithError($e->validator->errors()->first(), 422);
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422);
         } catch (\Exception $e) {
             return $this->responseWithError($e->getMessage(), 422);
         }
