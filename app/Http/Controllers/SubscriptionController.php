@@ -174,60 +174,57 @@ class SubscriptionController extends Controller
 
     public function verifyPayment(Request $request)
     {
-        $request->validate([
-            'razorpay_payment_id' => 'required|string',
-            'razorpay_subscription_id' => 'required|string',
-            'razorpay_signature' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'razorpay_payment_id' => 'required|string',
+                'razorpay_subscription_id' => 'required|string',
+                'razorpay_signature' => 'required|string',
+            ]);
 
-        $paymentId = $request->razorpay_payment_id;
-        $subscriptionId = $request->razorpay_subscription_id;
-        $signature = $request->razorpay_signature;
-        $secret = config('services.razorpay.secret');
+            $paymentId = $request->razorpay_payment_id;
+            $subscriptionId = $request->razorpay_subscription_id;
+            $signature = $request->razorpay_signature;
+            $secret = config('services.razorpay.secret');
 
-        $expected = hash_hmac('sha256', $paymentId . '|' . $subscriptionId, $secret);
+            $expected = hash_hmac('sha256', $paymentId . '|' . $subscriptionId, $secret);
 
-        if (!hash_equals($expected, $signature)) {
-            return response()->json(['message' => 'Invalid signature'], 400);
+            if (!hash_equals($expected, $signature)) {
+                return $this->responseWithError('Invalid signature', 400);
+            }
+
+            $api = new Api(config('services.razorpay.key'), $secret);
+            $payment = $api->payment->fetch($paymentId);
+
+            $sub = Subscription::where('razorpay_subscription_id', $subscriptionId)->first();
+            if (!$sub) {
+                return $this->responseWithError('Subscription not found', 404);
+            }
+
+            SubscriptionPayment::create([
+                'subscription_id' => $sub->id,
+                'razorpay_payment_id' => $paymentId,
+                'amount' => $payment->amount / 100,
+                'currency' => $payment->currency,
+                'status' => $payment->status,
+                'paid_at' => now(),
+                'payload' => $payment->toArray(),
+            ]);
+
+            $sub->update([
+                'status' => 'active',
+                'start_date' => now(),
+                'next_billing_date' => now()->addMonth(),
+            ]);
+
+            $user = $sub->user;
+            $user->update(['is_subscribed' => true]);
+
+            return $this->responseWithSuccess($payment, 'Payment verified successfully', 200);
+        } catch (ValidationException $e) {
+            $firstError = $e->validator->errors()->first();
+            return $this->responseWithError($firstError, 422);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
-
-        $api = new Api(config('services.razorpay.key'), $secret);
-        $payment = $api->payment->fetch($paymentId);
-
-        $sub = Subscription::where('razorpay_subscription_id', $subscriptionId)->first();
-        if (!$sub) {
-            return response()->json(['message' => 'Subscription not found'], 404);
-        }
-
-
-        // if (SubscriptionPayment::where('payment_id', $paymentId)->exists()) {
-        //     return response()->json(['message' => 'Already verified'], 200);
-        // }
-
-        // record first payment
-        SubscriptionPayment::create([
-            'subscription_id' => $sub->id,
-            'razorpay_payment_id' => $paymentId,
-            'amount' => $payment->amount / 100,
-            'currency' => $payment->currency,
-            'status' => $payment->status, // captured/authorized
-            'paid_at' => now(),
-            'payload' => $payment->toArray(),
-        ]);
-
-        // mark subscription active locally
-        $sub->update([
-            'status' => 'active',
-            'start_date' => now(),
-            'next_billing_date' => now()->addMonth(),
-            // 'cycles_remaining' => $sub->total_count - 1, // if you track cycles
-        ]);
-
-        // grant access to user features immediately
-        $user = $sub->user;
-        $user->update(['is_subscribed' => true]);
-
-        // respond to frontend
-        return response()->json(['message' => 'Subscription activated'], 200);
     }
 }
