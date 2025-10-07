@@ -12,7 +12,6 @@ class Subscription extends Model
         'subscription_plan_id',
         'user_id',
         'razorpay_subscription_id',
-        'plan_type',
         'location',
         'land_area',
         'kanals',
@@ -28,8 +27,12 @@ class Subscription extends Model
     {
         return $this->belongsTo(User::class);
     }
-     public function payments()
+    public function payments()
     {
         return $this->hasMany(SubscriptionPayment::class);
+    }
+    public function subscriptionPlan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }
 }

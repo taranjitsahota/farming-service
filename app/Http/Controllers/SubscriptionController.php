@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
@@ -25,7 +26,6 @@ class SubscriptionController extends Controller
                     'email' => $subscriptions->user->email,
                     'phone' => $subscriptions->user->phone,
                     'id' => $subscriptions->id,
-                    'plan_type' => $subscriptions->plan_type,
                     'kanals' => $subscriptions->kanals,
                     'total_price' => $subscriptions->total_price,
                     'status' => $subscriptions->status,
@@ -48,25 +48,19 @@ class SubscriptionController extends Controller
     {
         try {
             $request->validate([
-                'plan_type' => 'required|in:general,sugarcane',
+                'plan_id' => 'required|exists:subscription_plans,id',
                 'kanals' => 'required|integer|min:4'
             ]);
 
-            // $rate = $request->plan_type === 'sugarcane' ? 1500 : 2500;
-            // $discountedRate = $rate * 0.9;
-            // $total = $discountedRate * $request->land_area;
-
-            // Create 25% upfront order
-            // $initialPayment = $total * 0.25;
-
             $user = auth()->user();
             $kanals = $request->kanals;
-            $planType = $request->plan_type;
+            $plan = SubscriptionPlan::findOrFail($request->plan_id);
 
-            $planId = match ($planType) {
-                'general' => 'plan_RBdfbscFchaqwB',
-                'sugarcane' => 'plan_R37Gn4A4jTYoh8',
-            };
+            if (!$plan->razorpay_plan_id) {
+                return $this->responseWithError('Plan missing Razorpay plan ID', 400);
+            }
+
+            $planId = $plan->razorpay_plan_id;
 
             $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
@@ -81,20 +75,20 @@ class SubscriptionController extends Controller
                     'kanals' => $kanals,
                 ]
             ]);
-            // $amount = $subscription->amount;
-            $amount = $kanals * ($planType === 'general' ? 2500 : 1500);
+
+            $amount = $kanals * $plan->price_per_kanal;
 
             // Save draft subscription (optional)
             Subscription::create([
                 'user_id' => $user->id,
+                'plan_id' => $plan->id,
                 'razorpay_subscription_id' => $subscription->id,
-                'plan_type' => $planType,
                 'land_area' => $kanals,
                 'total_price' => $amount,
-                'price_per_kanal' => $planType === 'general' ? 2500 : 1500,
+                'price_per_kanal' => $plan->price_per_kanal,
                 'kanals' => $kanals,
-                'start_date' => now()->addMinutes(5),
-                'end_date' => now()->addMonths(11),
+                'start_date' => \Carbon\Carbon::createFromTimestamp($subscription->current_start),
+                'end_date' => \Carbon\Carbon::createFromTimestamp($subscription->current_end),
                 'status' => 'created',
             ]);
 
@@ -119,8 +113,8 @@ class SubscriptionController extends Controller
     public function show($id)
     {
         try {
-            $subscriptions = Subscription::find($id);
-            return $this->responseWithSuccess($subscriptions, 'Subscriptions fetched successfully', 200);
+            $subscription = Subscription::with(['user', 'plan'])->findOrFail($id);
+            return $this->responseWithSuccess($subscription, 'Subscription fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }
@@ -133,13 +127,14 @@ class SubscriptionController extends Controller
     {
         try {
             $request->validate([
-                'plan_type' => 'required|in:general,sugarcane',
-                'land_area' => 'required|numeric|min:4'
+                'plan_id' => 'required|exists:subscription_plans,id',
+                'land_area' => 'required|numeric|min:4',
             ]);
 
-            $subscriptions = Subscription::find($id);
-            $subscriptions->update($request->all());
-            return $this->responseWithSuccess($subscriptions, 'Subscriptions updated successfully', 200);
+            $subscription = Subscription::findOrFail($id);
+            $subscription->update($request->only(['plan_id', 'land_area']));
+
+            return $this->responseWithSuccess($subscription, 'Subscription updated successfully', 200);
         } catch (ValidationException $e) {
             return $this->responseWithError($e->validator->errors()->first(), 422);
         } catch (\Exception $e) {
@@ -223,7 +218,6 @@ class SubscriptionController extends Controller
         // mark subscription active locally
         $sub->update([
             'status' => 'active',
-            'payment_id' => $paymentId,
             'start_date' => now(),
             'next_billing_date' => now()->addMonth(),
             // 'cycles_remaining' => $sub->total_count - 1, // if you track cycles

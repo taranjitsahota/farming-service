@@ -27,4 +27,8 @@ class SubscriptionPlan extends Model
         'benefits' => 'array',
         'status' => 'boolean',
     ];
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'subscription_plan_id');
+    }
 }
