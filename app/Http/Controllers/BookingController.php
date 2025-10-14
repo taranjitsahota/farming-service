@@ -694,7 +694,10 @@ class BookingController extends Controller
             $formatted = [
                 'id' => $booking->id,
                 'crop_name' => $booking->crop->name ?? '',
+                'area_id' => $booking->area_id,
+                'service_id' => $booking->equipmentType->service_id,
                 'service_name' => $booking->equipmentType->service->name ?? '',
+                'equipment_type_id' => $booking->equipment_type_id,
                 'equipment_name' => $booking->equipmentType->equipment->name ?? '',
                 'land_area' => $booking->land_area,
                 'date' => $booking->slot_date ? $booking->slot_date->format('Y-m-d') : '',
