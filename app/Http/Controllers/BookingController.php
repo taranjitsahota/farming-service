@@ -75,10 +75,11 @@ class BookingController extends Controller
             $formatted = $bookings->map(function ($booking) {
                 return [
                     'id' => $booking->id,
+                    'service_name' => $booking->equipmentType->service->name,
                     'crop_name' => $booking->crop->name,
                     'equipment_name' => $booking->equipmentType->equipment->name,
                     'equipment_image' => $booking->equipmentType->image,
-                    'area' => $booking->land_area,
+                    'land_area' => $booking->land_area,
                     'date' => $booking->slot_date->format('Y-m-d'),
                     'start_time' => $booking->start_time,
                     'end_time' => $booking->end_time,
@@ -87,6 +88,35 @@ class BookingController extends Controller
             });
 
             return $this->responseWithSuccess($formatted, 'Bookings fetched successfully', 200);
+        } catch (\Exception $e) {
+            return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
+        }
+    }
+
+    public function getConfirmedBookings(){
+        try {
+            $user = auth()->user();
+            $bookings = Booking::where('user_id', $user->id)
+                ->where('booking_status', 'confirmed')
+                ->with(['equipmentType', 'crop'])
+                ->get();
+
+            $formatted = $bookings->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'service_name' => $booking->equipmentType->service->name,
+                    'crop_name' => $booking->crop->name,
+                    'equipment_name' => $booking->equipmentType->equipment->name,
+                    'equipment_image' => $booking->equipmentType->image,
+                    'land_area' => $booking->land_area,
+                    'date' => $booking->slot_date->format('Y-m-d'),
+                    'start_time' => $booking->start_time,
+                    'end_time' => $booking->end_time,
+                    'booking_status' => $booking->booking_status
+                ];
+            });
+
+            return $this->responseWithSuccess($formatted, 'Confirmed Bookings fetched successfully', 200);
         } catch (\Exception $e) {
             return $this->responseWithError('Something went wrong!', 500, $e->getMessage());
         }

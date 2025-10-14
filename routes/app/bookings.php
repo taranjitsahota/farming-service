@@ -12,6 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('bookings', BookingController::class);
         Route::get('/get-user-bookings', [BookingController::class, 'getUserBookings']);
         Route::get('/get-bookings-by-id/{id}', [BookingController::class, 'getBookingsById']);
+        Route::get('/get-confirmed-bookings', [BookingController::class, 'getConfirmedBookings']);
     });
 
 });
