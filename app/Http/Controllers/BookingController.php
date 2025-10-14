@@ -93,7 +93,7 @@ class BookingController extends Controller
         }
     }
 
-    public function getConfirmedBookings(){
+    public function getUserConfirmedBookings(){
         try {
             $user = auth()->user();
             $bookings = Booking::where('user_id', $user->id)
