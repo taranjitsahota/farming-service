@@ -101,6 +101,10 @@ class BookingController extends Controller
                 ->with(['equipmentType', 'crop'])
                 ->get();
 
+            if ($bookings->isEmpty()) {
+                return $this->responseWithSuccess([], 'No Bookings Yet', 200);
+            }
+
             $formatted = $bookings->map(function ($booking) {
                 return [
                     'id' => $booking->id,
@@ -627,7 +631,6 @@ class BookingController extends Controller
 
     public function cancelBooking(Request $request)
     {
-        // dd($request->all());
         try {
             $request->validate([
                 'booking_id' => 'required|exists:bookings,id',
@@ -641,8 +644,9 @@ class BookingController extends Controller
             }
 
             $now = now();
-            $startTime = Carbon::parse($booking->slot_date . ' ' . $booking->start_time);
-            // Check if service is already started or partially used
+            $slotDate = Carbon::parse($booking->slot_date);
+            $startTime = $slotDate->setTimeFromTimeString($booking->start_time);
+
             if ($now->greaterThanOrEqualTo($startTime)) {
                 return $this->responseWithError('Cannot cancel after service started or partially used.', 403);
             }
@@ -650,10 +654,9 @@ class BookingController extends Controller
             $refundType = 'none';
             $refundAmount = 0;
 
-            // Check for weather/natural reason
             if (strtolower($request->cancel_reason) === 'weather') {
                 $refundType = 'full';
-                $refundAmount = $booking->price; // assuming this field exists
+                $refundAmount = $booking->price;
             } else {
                 $diffInMinutes = $startTime->diffInMinutes($now);
 
@@ -662,18 +665,16 @@ class BookingController extends Controller
                     $refundAmount = $booking->price;
                 } elseif ($diffInMinutes < 120) {
                     $refundType = 'partial';
-                    $refundAmount = $booking->price * 0.80; // 20% charge
+                    $refundAmount = $booking->price * 0.80;
                 }
             }
-            // Update booking status
+
             $booking->status = "cancelled";
             $booking->cancelled_at = now();
             $booking->cancel_reason = $request->cancel_reason ?? null;
             $booking->refund_amount = $refundAmount;
-            $booking->refund_status = 'pending'; // Or 'pending'
+            $booking->refund_status = 'pending';
             $booking->save();
-
-            // Optionally: dispatch refund job or API call here
 
             return $this->responseWithSuccess($booking, "Booking cancelled successfully. Refund Type: {$refundType}", 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -744,7 +745,7 @@ class BookingController extends Controller
                 'booking_status' => $booking->booking_status,
                 'amount' => $booking->price,
                 'mode' => $booking->payment_method,
-                'paid_on' => $booking->paid_at->format('Y-m-d') ?? '',
+                'paid_on' => $booking->paid_at ? $booking->paid_at->format('Y-m-d') : '',
                 'created_at' => $booking->created_at->format('Y-m-d') ?? '',
             ];
             return $this->responseWithSuccess($formatted, 'Booking fetched successfully', 200);
