@@ -669,7 +669,7 @@ class BookingController extends Controller
                 }
             }
 
-            $booking->status = "cancelled";
+            $booking->booking_status = "cancelled";
             $booking->cancelled_at = now();
             $booking->cancel_reason = $request->cancel_reason ?? null;
             $booking->refund_amount = $refundAmount;
